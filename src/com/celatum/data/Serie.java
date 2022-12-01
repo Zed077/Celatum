@@ -2,6 +2,7 @@ package com.celatum.data;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -62,11 +63,19 @@ public class Serie implements Cloneable {
 	}
 
 	/**
-	 * 
+	 * Not synchronised!! Only use after processing as read only
 	 * @return dates in ascending order
 	 */
 	public Date[] getAllDates() {
 		return dataset.keySet().toArray(new Date[dataset.size()]);
+	}
+	
+	/**
+	 * 
+	 * @return all entries in ascending date order
+	 */
+	public Collection<SerieItem> getAllEntries() {
+		return dataset.values();
 	}
 
 	public SerieItem getItem(int i) {

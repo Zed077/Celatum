@@ -17,29 +17,27 @@ import org.postgresql.util.PSQLException;
 public class DatabaseConnector {
 	private static SimpleDateFormat PGDATEFORMAT = new SimpleDateFormat("yyyy-MM-dd", Locale.UK);
 
-	public static Date getLastUpdatedDate(Instrument inst) throws SQLException {
-		try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
-				"Abacus2020")) {
-			Statement statement = connection.createStatement();
+	public static Date getLastUpdatedDate(Instrument inst) throws Exception {
+		Class.forName("org.postgresql.Driver");
+		Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
+				"Abacus2020");
+		Statement statement = connection.createStatement();
 
-			ResultSet resultSet = statement.executeQuery(
-					"SELECT day FROM historicaldata WHERE epic='" + inst.getEpic() + "' ORDER BY day DESC LIMIT 2");
+		ResultSet resultSet = statement.executeQuery(
+				"SELECT day FROM historicaldata WHERE epic='" + inst.getEpic() + "' ORDER BY day DESC LIMIT 2");
 
-			int i = 0;
-			Date maxDate = null;
-			while (resultSet.next()) {
-				maxDate = resultSet.getDate("day");
-				i++;
-			}
-			System.out.println("getLastUpdatedDate " + maxDate);
+		int i = 0;
+		Date maxDate = null;
+		while (resultSet.next()) {
+			maxDate = resultSet.getDate("day");
+			i++;
+		}
+		System.out.println("getLastUpdatedDate " + maxDate);
 
-			if (i == 2) {
-				return maxDate;
-			} else {
-				return null;
-			}
-		} catch (SQLException e) {
-			throw e;
+		if (i == 2) {
+			return maxDate;
+		} else {
+			return null;
 		}
 	}
 
@@ -50,44 +48,42 @@ public class DatabaseConnector {
 	 * @throws SQLException
 	 * @throws ParseException
 	 */
-	public static void getHistoricalData(HistoricalData hd) throws SQLException, ParseException {
-		try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
-				"Abacus2020")) {
-			Statement statement = connection.createStatement();
+	public static void getHistoricalData(HistoricalData hd) throws Exception {
+		Class.forName("org.postgresql.Driver");
+		Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
+				"Abacus2020");
+		Statement statement = connection.createStatement();
 
-			ResultSet resultSet = statement.executeQuery(
-					"SELECT * FROM historicaldata WHERE epic='" + hd.instrument.getEpic() + "' ORDER BY day ASC");
+		ResultSet resultSet = statement.executeQuery(
+				"SELECT * FROM historicaldata WHERE epic='" + hd.instrument.getEpic() + "' ORDER BY day ASC");
 
-			while (resultSet.next()) {
-				Date day = resultSet.getDate("day");
+		while (resultSet.next()) {
+			Date day = resultSet.getDate("day");
 
-				// Exclude Sundays or Saturdays?? Not that easy
+			// Exclude Sundays or Saturdays?? Not that easy
 //				Calendar gc = GregorianCalendar.getInstance();
 //				gc.setTime(day);
 //				if (gc.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY || gc.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) continue;
 
-				int volume = resultSet.getInt("volume");
-				double askHigh = resultSet.getDouble("askhigh");
-				double askLow = resultSet.getDouble("asklow");
-				double askOpen = resultSet.getDouble("askopen");
-				double askClose = resultSet.getDouble("askclose");
-				double bidHigh = resultSet.getDouble("bidhigh");
-				double bidLow = resultSet.getDouble("bidlow");
-				double bidOpen = resultSet.getDouble("bidopen");
-				double bidClose = resultSet.getDouble("bidclose");
+			int volume = resultSet.getInt("volume");
+			double askHigh = resultSet.getDouble("askhigh");
+			double askLow = resultSet.getDouble("asklow");
+			double askOpen = resultSet.getDouble("askopen");
+			double askClose = resultSet.getDouble("askclose");
+			double bidHigh = resultSet.getDouble("bidhigh");
+			double bidLow = resultSet.getDouble("bidlow");
+			double bidOpen = resultSet.getDouble("bidopen");
+			double bidClose = resultSet.getDouble("bidclose");
 
-				hd.askOpen.put(day, askOpen);
-				hd.askClose.put(day, askClose);
-				hd.askHigh.put(day, askHigh);
-				hd.askLow.put(day, askLow);
-				hd.bidOpen.put(day, bidOpen);
-				hd.bidClose.put(day, bidClose);
-				hd.bidHigh.put(day, bidHigh);
-				hd.bidLow.put(day, bidLow);
-				hd.volume.put(day, (double) volume);
-			}
-		} catch (SQLException e) {
-			throw e;
+			hd.askOpen.put(day, askOpen);
+			hd.askClose.put(day, askClose);
+			hd.askHigh.put(day, askHigh);
+			hd.askLow.put(day, askLow);
+			hd.bidOpen.put(day, bidOpen);
+			hd.bidClose.put(day, bidClose);
+			hd.bidHigh.put(day, bidHigh);
+			hd.bidLow.put(day, bidLow);
+			hd.volume.put(day, (double) volume);
 		}
 	}
 
