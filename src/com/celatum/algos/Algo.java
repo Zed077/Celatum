@@ -236,4 +236,33 @@ public abstract class Algo {
 		return group;
 	}
 
+	public String getGenoType() {
+		TreeSet<String> genotype = new TreeSet<String>();
+		for (EntryCondition ec : getEntryConditions()) {
+			genotype.add(ec.getName());
+		}
+		for (ExitStrategy es : getExitStrategies()) {
+			genotype.add(es.getName());
+		}
+
+		String type = "";
+		for (String s : genotype) {
+			type += s;
+		}
+
+		return type;
+	}
+	
+	@Override
+	public String toString() {
+		String s = getName();
+		for (EntryCondition ec : getEntryConditions()) {
+			s += "-" + ec.toString();
+		}
+		for (ExitStrategy es : getExitStrategies()) {
+			s += "--" + es.toString();
+		}
+		return s;
+	}
+
 }

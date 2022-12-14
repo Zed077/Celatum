@@ -435,31 +435,11 @@ public class GeneticEvolution {
 
 		@Override
 		public String toString() {
-			String s = algo.getName();
-			for (EntryCondition ec : algo.getEntryConditions()) {
-				s += "-" + ec.toString();
-			}
-			for (ExitStrategy es : algo.getExitStrategies()) {
-				s += "--" + es.toString();
-			}
-			return s;
+			return algo.toString();
 		}
 
 		public String getGenoType() {
-			TreeSet<String> genotype = new TreeSet<String>();
-			for (EntryCondition ec : algo.getEntryConditions()) {
-				genotype.add(ec.getName());
-			}
-			for (ExitStrategy es : algo.getExitStrategies()) {
-				genotype.add(es.getName());
-			}
-
-			String type = "";
-			for (String s : genotype) {
-				type += s;
-			}
-
-			return type;
+			return algo.getGenoType();
 		}
 
 		public AlgoRunner clone() {

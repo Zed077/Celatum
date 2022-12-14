@@ -313,10 +313,14 @@ public class BookOfRecord {
 	}
 
 	public void printStats(Date referenceDate) {
-		System.out.println(
+		System.out.print(this.getStats(referenceDate));
+	}
+	
+	public String getStats(Date referenceDate) {
+		String res = 
 				getActiveOrders(referenceDate).size() + " Active Orders, " + getCancelledOrders(referenceDate).size()
 						+ " Closed Orders, " + getActivePositions(referenceDate).size() + " Active Positions, "
-						+ getClosedPositions(referenceDate).size() + " Closed Positions");
+						+ getClosedPositions(referenceDate).size() + " Closed Positions/n";
 
 		NumberFormat nform = NumberFormat.getInstance();
 		nform.setMaximumFractionDigits(0);
@@ -330,23 +334,25 @@ public class BookOfRecord {
 		NumberFormat defaultFormat = NumberFormat.getPercentInstance();
 		defaultFormat.setMinimumFractionDigits(1);
 
-		System.out.println("Value " + nform.format(returnAbsolute) + " Costs "
-				+ nform.format(costsToDate(referenceDate)) + " Yearly Return " + defaultFormat.format(returnPercent));
+		res.concat("Value " + nform.format(returnAbsolute) + " Costs "
+				+ nform.format(costsToDate(referenceDate)) + " Yearly Return " + defaultFormat.format(returnPercent) + "/n");
 
 		// Performance
-		System.out.println("Lowest PnL " + nform.format(lowestPnL()) + " Max Drawdown "
-				+ nform.format(this.maxDrawdown()) + " Avg Trade Perf " + defaultFormat.format(averagePerformance()));
+		res.concat("Lowest PnL " + nform.format(lowestPnL()) + " Max Drawdown "
+				+ nform.format(this.maxDrawdown()) + " Avg Trade Perf " + defaultFormat.format(averagePerformance()) + "/n");
 
 		// Active orders
-		System.out.println("\nActive Orders");
+		res.concat("\nActive Orders\n");
 		for (Order o : getActiveOrders(referenceDate)) {
-			o.println();
+			res.concat(o + "/n");
 		}
 		// Active positions
-		System.out.println("\nActive Positions");
+		res.concat("\nActive Positions\n");
 		for (Position p : getActivePositions(referenceDate)) {
-			p.println();
+			res.concat(p + "/n");
 		}
+		
+		return res;
 	}
 
 	public double averagePerformance() {
