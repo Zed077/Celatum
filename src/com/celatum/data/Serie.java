@@ -50,6 +50,11 @@ public class Serie implements Cloneable {
 		cacheValues();
 	}
 
+	/**
+	 * Return value for this entry
+	 * @param i
+	 * @return
+	 */
 	public double get(int i) {
 		return cache.get(index(i)).getValue();
 	}

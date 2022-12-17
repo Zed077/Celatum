@@ -36,7 +36,7 @@ import com.celatum.trading.Position;
 import com.celatum.view.Chart;
 
 public class Main {
-	public static final int NTHREAD = 8;
+	public static final int NTHREAD = 32;
 
 	public static List<Instrument> instruments;
 

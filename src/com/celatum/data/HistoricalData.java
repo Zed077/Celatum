@@ -1,6 +1,7 @@
 package com.celatum.data;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 import com.celatum.maths.Calc;
@@ -31,6 +32,11 @@ public class HistoricalData implements Cloneable {
 	private HistoricalData() {
 	}
 
+	/**
+	 * Load data from IG by default
+	 * 
+	 * @param instrument
+	 */
 	public HistoricalData(Instrument instrument) {
 		this(instrument, true);
 	}
@@ -54,34 +60,63 @@ public class HistoricalData implements Cloneable {
 			this.empty();
 			DatabaseConnector.getHistoricalData(this);
 
-			// Compute mid
-			midHigh = Calc.mid(askHigh, bidHigh);
-			midLow = Calc.mid(askLow, bidLow);
-			midOpen = Calc.mid(askOpen, bidOpen);
-			midClose = Calc.mid(askClose, bidClose);
-
-			// Dates
-			this.dates = askHigh.getAllDates();
-
-			// Register series
-			syncReferenceIndex(askHigh);
-			syncReferenceIndex(askLow);
-			syncReferenceIndex(askOpen);
-			syncReferenceIndex(askClose);
-			syncReferenceIndex(bidHigh);
-			syncReferenceIndex(bidLow);
-			syncReferenceIndex(bidOpen);
-			syncReferenceIndex(bidClose);
-			syncReferenceIndex(volume);
-			syncReferenceIndex(midHigh);
-			syncReferenceIndex(midLow);
-			syncReferenceIndex(midOpen);
-			syncReferenceIndex(midClose);
+			processData();
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
+	}
+
+	/**
+	 * Loads last x months of data from IG but does not store it in DB.
+	 * 
+	 * @param instrument
+	 */
+	public HistoricalData(Instrument instrument, int nMonths) {
+		try {
+			this.instrument = instrument;
+
+			// 3 months ago
+			Calendar calendar = Calendar.getInstance();
+			calendar.add(Calendar.MONTH, -nMonths);
+			Date startDate = calendar.getTime();
+
+			// Obtain new IG prices from that date onward
+			IGConnector.getHistoricalPrices(this, startDate);
+
+			processData();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
+
+	private void processData() {
+		// Compute mid
+		midHigh = Calc.mid(askHigh, bidHigh);
+		midLow = Calc.mid(askLow, bidLow);
+		midOpen = Calc.mid(askOpen, bidOpen);
+		midClose = Calc.mid(askClose, bidClose);
+
+		// Dates
+		this.dates = askHigh.getAllDates();
+
+		// Register series
+		syncReferenceIndex(askHigh);
+		syncReferenceIndex(askLow);
+		syncReferenceIndex(askOpen);
+		syncReferenceIndex(askClose);
+		syncReferenceIndex(bidHigh);
+		syncReferenceIndex(bidLow);
+		syncReferenceIndex(bidOpen);
+		syncReferenceIndex(bidClose);
+		syncReferenceIndex(volume);
+		syncReferenceIndex(midHigh);
+		syncReferenceIndex(midLow);
+		syncReferenceIndex(midOpen);
+		syncReferenceIndex(midClose);
 	}
 
 	/**
@@ -123,7 +158,7 @@ public class HistoricalData implements Cloneable {
 		Date referenceDate = dates[referenceIndex];
 		setReferenceIndex(referenceDate);
 	}
-	
+
 	public int setReferenceIndex(Date referenceDate) {
 		for (Serie s : registeredSeries) {
 			s.setReferenceDate(referenceDate);
@@ -180,7 +215,7 @@ public class HistoricalData implements Cloneable {
 
 		return clone;
 	}
-	
+
 	public String getEpic() {
 		return this.instrument.getEpic();
 	}
