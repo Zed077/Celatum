@@ -39,6 +39,7 @@ import com.celatum.algos.exit.SignificantFavorableMove;
 import com.celatum.algos.exit.TightenStopWithAge;
 import com.celatum.algos.exit.TightenStopWithEMA;
 import com.celatum.algos.exit.TimedExit;
+import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
 
@@ -60,7 +61,7 @@ public class GeneticEvolution {
 		numberFormat.setMaximumFractionDigits(0);
 
 		for (Instrument id : instruments) {
-			HistoricalData hd = new HistoricalData(id, false);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, false);
 			histories.add(hd);
 		}
 	}

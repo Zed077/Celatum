@@ -10,11 +10,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.celatum.data.HistoricalData;
-import com.celatum.data.IGConnector;
 import com.celatum.data.Instrument;
 import com.celatum.data.Serie;
-import com.celatum.maths.HighLow;
 import com.celatum.maths.Calc;
+import com.celatum.maths.HighLow;
 
 class CalcTest {
 	private Serie serie;
@@ -37,15 +36,15 @@ class CalcTest {
 	@AfterEach
 	void tearDown() throws Exception {
 	}
-	
+
 	@Test
 	void testReverseCompound() {
 		double pv = 250;
 		double fv = 500;
 		double period = 5;
 		double rate = Calc.reverseCompound(pv, fv, period);
-		assertEquals(1487, Math.round(rate*10000));
-		
+		assertEquals(1487, Math.round(rate * 10000));
+
 //		rate = Calc.reverseCompound(250000, -332378.0992869161, 15.106164241533486);
 //		double val = 250000 / 332378.0992869161;
 //		double pp = 1.0 / period;
@@ -65,14 +64,14 @@ class CalcTest {
 		assertEquals(150, sma.get(1));
 		assertEquals(2, sma.size());
 	}
-	
+
 	@Test
 	void testATH() {
 		Serie ath = HighLow.allTimeHigh(serie);
 		assertEquals(400, ath.get(0));
 		assertEquals(200, ath.get(1));
 		assertEquals(100, ath.get(2));
-		
+
 		serie = new Serie();
 
 		gc.set(2020 - 1900, 0, 1);
@@ -83,13 +82,13 @@ class CalcTest {
 
 		gc.set(2020 - 1900, 0, 4);
 		serie.put(gc.getTime(), 200);
-		
+
 		ath = HighLow.allTimeHigh(serie);
 		assertEquals(400, ath.get(0));
 		assertEquals(400, ath.get(1));
 		assertEquals(100, ath.get(2));
 	}
-	
+
 	@Test
 	void testPeriodLow() {
 		double v = HighLow.periodLow(serie, 0, 3);
@@ -101,7 +100,7 @@ class CalcTest {
 
 		v = HighLow.periodLow(serie, 1, 1);
 		assertEquals(200, v);
-		
+
 		gc.set(2020 - 1900, 0, 2);
 		v = HighLow.periodLow(serie, gc.getTime(), 1);
 		assertEquals(200, v);
@@ -317,8 +316,8 @@ class CalcTest {
 		gc.set(2020 - 1900, 0, 20);
 		close.put(gc.getTime(), 50.23);
 
-		IGConnector.connect();
-		HistoricalData hd = new HistoricalData(new Instrument("B", "IX.D.SPTRD.DAILY.IP", "B"), false);
+		HistoricalData hd = HistoricalData
+				.getEmptyHistoricalData(Instrument.getInstrument("B", "IX.D.SPTRD.DAILY.IP", "B"));
 		hd.midHigh = high;
 		hd.midClose = close;
 		hd.midLow = low;
@@ -338,23 +337,23 @@ class CalcTest {
 		// TODO below is the real value. Need to move away from using double into
 		// BigDecimal to avoid all these rounding errors
 //		assertEquals(0.56, Math.round(atr.get(6) * 100.0) / 100.0);
-		
+
 		// Test ADP
 		System.out.println("*** ADP ***");
 		Serie adp = Calc.atrPercent(hd, 14);
 		adp.println();
 		assertEquals(7, adp.size());
-		assertEquals(1.30, Math.round(adp.get(0) * 10000.0)/100.0);
-		assertEquals(1.11, Math.round(adp.get(3) * 10000.0)/100.0);
-		assertEquals(1.13, Math.round(adp.get(6) * 10000.0)/100.0);
-		
+		assertEquals(1.30, Math.round(adp.get(0) * 10000.0) / 100.0);
+		assertEquals(1.11, Math.round(adp.get(3) * 10000.0) / 100.0);
+		assertEquals(1.13, Math.round(adp.get(6) * 10000.0) / 100.0);
+
 		// Test SDP
 		System.out.println("*** SDP ***");
 		Serie sdp = Calc.standardDeviationPercent(hd, 14);
 		sdp.println();
 		assertEquals(7, sdp.size());
-		assertEquals(1.42, Math.round(sdp.get(0) * 10000.0)/100.0);
-		assertEquals(1.20, Math.round(sdp.get(3) * 10000.0)/100.0);
-		assertEquals(1.19, Math.round(sdp.get(6) * 10000.0)/100.0);
+		assertEquals(1.42, Math.round(sdp.get(0) * 10000.0) / 100.0);
+		assertEquals(1.20, Math.round(sdp.get(3) * 10000.0) / 100.0);
+		assertEquals(1.19, Math.round(sdp.get(6) * 10000.0) / 100.0);
 	}
 }

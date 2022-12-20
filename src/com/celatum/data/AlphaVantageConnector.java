@@ -18,14 +18,16 @@ import java.util.Vector;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class IGConnector {
+public class AlphaVantageConnector {
 	private static String CST;
 	private static String XSECURITYTOKEN;
 	private static String defaultStartDateTime = "2006-01-01T07:00:00";
 //	private static String defaultStartDateTime = "2021-11-15T07:00:00";
 //	private static String testEndDateTime = "2006-11-15T07:00:00";
 	public static SimpleDateFormat IGDATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.UK);
-	private static IGCredentials currentCredentials;
+	public static final String LIVEWATCHLIST = "live";
+	public static final String TESTWATCHLIST = "test";
+	private static final String API_KEY = "0VQDGS574IF8HF9E";
 	public static int errorCount = 0;
 	private static Date validUntilTime;
 	private static double accountAvailable;
@@ -34,90 +36,71 @@ public class IGConnector {
 	/**
 	 * Both tokens are initially valid for 6 hours but get extended up to a maximum
 	 * of 72 hours while they are in use.
-	 * 
-	 * @throws IOException
 	 */
-	static void connect(IGCredentials credentials) throws IOException {
-		currentCredentials = credentials;
-
+	public static void connect() {
 		if (validUntilTime != null && (new Date()).before(validUntilTime))
 			return;
 
-		System.out.print("Connecting to " + credentials.getName() + " ");
-		URL url = new URL("https://api.ig.com/gateway/deal/session");
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		conn.setRequestMethod("POST");
-		conn.setDoOutput(true);
-		conn.setRequestProperty("Accept", "application/json; charset=UTF-8");
-		conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-		conn.setRequestProperty("VERSION", "2");
-		conn.setRequestProperty("X-IG-API-KEY", currentCredentials.getKey());
+		try {
+//			System.out.println("Connect");
+			URL url = new URL("https://api.ig.com/gateway/deal/session");
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setDoOutput(true);
+			conn.setRequestProperty("Accept", "application/json; charset=UTF-8");
+			conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+			conn.setRequestProperty("VERSION", "2");
+			conn.setRequestProperty("X-IG-API-KEY", API_KEY);
 
-		String data = currentCredentials.getCredentialString();
-		byte[] out = data.getBytes(StandardCharsets.UTF_8);
+//			String data = "{\n  \"identifier\": \"zed077\",\n  \"password\": \"z#V!uGge!if-H4t\"\n}";
+			String data = "{\n  \"identifier\": \"concombre\",\n  \"password\": \"skdA_22#Qnr32-u\"\n}";
 
-		OutputStream stream = conn.getOutputStream();
-		stream.write(out);
+			byte[] out = data.getBytes(StandardCharsets.UTF_8);
 
-		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
+			OutputStream stream = conn.getOutputStream();
+			stream.write(out);
 
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
-			StringBuilder response = new StringBuilder();
-			String responseLine = null;
-			while ((responseLine = br.readLine()) != null) {
-				response.append(responseLine.trim());
-			}
+//			System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
 
-			JSONObject jo = new JSONObject(response.toString());
+			try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+				StringBuilder response = new StringBuilder();
+				String responseLine = null;
+				while ((responseLine = br.readLine()) != null) {
+					response.append(responseLine.trim());
+				}
 
-			// CH Account info
-			if (credentials == IGCredentials.CH_Credentials) {
+				JSONObject jo = new JSONObject(response.toString());
+				// Account info
 				JSONObject jaccount = jo.getJSONObject("accountInfo");
 				accountAvailable = jaccount.getDouble("available");
 				accountBalance = jaccount.getDouble("balance");
 			}
-		}
 
-		CST = conn.getHeaderField("CST");
+			CST = conn.getHeaderField("CST");
 //			System.out.println("CST : " + CST);
-		XSECURITYTOKEN = conn.getHeaderField("X-SECURITY-TOKEN");
+			XSECURITYTOKEN = conn.getHeaderField("X-SECURITY-TOKEN");
 //			System.out.println("X-SECURITY-TOKEN : " + XSECURITYTOKEN);
-		Calendar calendar = Calendar.getInstance();
-		calendar.add(Calendar.MINUTE, 350);
-		validUntilTime = calendar.getTime();
+			Calendar calendar = Calendar.getInstance();
+			calendar.add(Calendar.MINUTE, 350);
+			validUntilTime = calendar.getTime();
 
-		conn.disconnect();
-	}
-
-	static void disconnect() {
-		validUntilTime = null;
-		if (currentCredentials == null) {
-			return;
-		}
-
-		try {
-			System.out.print("Disconnecting from " + currentCredentials.getName() + " ");
-			URL url = new URL("https://api.ig.com/gateway/deal/session");
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("DELETE");
-			conn.setDoOutput(true);
-			conn.setRequestProperty("Accept", "application/json; charset=UTF-8");
-			conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-			conn.setRequestProperty("VERSION", "1");
-			conn.setRequestProperty("X-IG-API-KEY", currentCredentials.getKey());
-			conn.setRequestProperty("CST", CST);
-			conn.setRequestProperty("X-SECURITY-TOKEN", XSECURITYTOKEN);
-
-			System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
-
-			currentCredentials = null;
-		} catch (IOException e) {
+			conn.disconnect();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=Credit%20Suisse&apikey=0VQDGS574IF8HF9E
+	 * @param searchString
+	 * @return
+	 */
+	public static List<Object> search(String searchString) {
+		return null;
+	}
 
-	public static void getHistoricalPrices(HistoricalData hd, Date startDate) throws Exception {
-		System.out.print("\ngetHistoricalPrices " + hd.instrument.getName() + ", " + startDate + " ");
+	public static void getDailyAdjusted100(HistoricalData hd, Date startDate) throws Exception {
+		System.out.println("\ngetHistoricalPrices " + hd.instrument.getName() + ", " + startDate);
 
 		// Establish start date
 		String startDateTime;
@@ -131,8 +114,9 @@ public class IGConnector {
 		String endDateTime = IGDATEFORMAT.format(new Date());
 
 		// Fetch Data
-		URL url = new URL("https://api.ig.com/gateway/deal/prices/" + hd.instrument.getEpic()
-				+ "?resolution=DAY&pageSize=0&from=" + startDateTime + "&to=" + endDateTime);
+		// https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=IBM&interval=5min&apikey=demo
+		URL url = new URL("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol="
+				+ hd.instrument.getEpic() + "?resolution=DAY&pageSize=0&from=" + startDateTime + "&to=" + endDateTime);
 		HttpURLConnection conn = createGetConnection(url, "3");
 
 		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
@@ -143,7 +127,7 @@ public class IGConnector {
 			while ((responseLine = br.readLine()) != null) {
 				response.append(responseLine.trim());
 			}
-//			System.out.println(response.toString());
+			System.out.println(response.toString());
 
 			JSONObject jo = new JSONObject(response.toString());
 			JSONArray arr = jo.getJSONArray("prices");
@@ -191,13 +175,12 @@ public class IGConnector {
 					e.printStackTrace();
 				}
 			}
-			errorCount = 0;
 		} catch (Exception e) {
 			if (errorCount <= 1) {
 				System.out.println("Connection exception, retrying\n" + e.getMessage());
 				errorCount++;
 				Thread.sleep(61000);
-				getHistoricalPrices(hd, startDate);
+				getDailyAdjusted100(hd, startDate);
 			} else {
 				throw e;
 			}
@@ -206,12 +189,11 @@ public class IGConnector {
 		}
 	}
 
-	static void augmentInstrument(Instrument id) throws Exception {
-		System.out.print("augmentInstrument " + id.getName() + " ");
+	public static MarginFactorData getMarginFactor(Instrument id) throws Exception {
+//		System.out.println("\ngetMarginFactor " + id.getName());
 
 		URL url = new URL("https://api.ig.com/gateway/deal/markets/" + id.getEpic());
 		HttpURLConnection conn = createGetConnection(url, "3");
-		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
 
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
 			StringBuilder response = new StringBuilder();
@@ -219,9 +201,7 @@ public class IGConnector {
 			while ((responseLine = br.readLine()) != null) {
 				response.append(responseLine.trim());
 			}
-			if (errorCount == 1) {
-				System.out.println(response.toString());
-			}
+//			System.out.println(response.toString());
 
 			JSONObject jo = new JSONObject(response.toString());
 			JSONObject jins = jo.getJSONObject("instrument");
@@ -229,15 +209,6 @@ public class IGConnector {
 			// Type
 			String type = jins.getString("type");
 			id.setType(type);
-			if (type.equals("SHARES")) {
-				id.setIGUKMultiplier(100);
-			}
-
-			// Codes
-			if (!jins.isNull("chartCode")) {
-				id.setChartCode(jins.getString("chartCode"));
-			}
-			id.setNewsCode(jins.getString("newsCode"));
 
 			// Contract size
 			int contractSize = 1;
@@ -262,17 +233,16 @@ public class IGConnector {
 
 			MarginFactorData md = new MarginFactorData(max, margin / 100, contractSize);
 			md.setMinControlledRiskStopDistance(distance, unit);
-			id.marginFactor = md;
-			errorCount = 0;
+			return md;
 
 		} catch (Exception e) {
 			if (errorCount <= 1) {
 				System.out.println("Connection exception, retrying\n" + e.getMessage());
 				errorCount++;
 				Thread.sleep(61000);
-				augmentInstrument(id);
+				return getMarginFactor(id);
 			} else {
-				System.err.println(id.getName() + " " + id.getEpic() + " " + e.getMessage());
+				System.err.println(id.getName() + " " + id.getEpic());
 				throw e;
 			}
 		} finally {
@@ -319,7 +289,17 @@ public class IGConnector {
 //		}
 //	}
 
-	static List<Instrument> getWatchlistById(String watchlistId) throws Exception {
+	public static List<Instrument> getWatchlist(String watchlistName) throws Exception {
+		List<WatchlistData> ws = AlphaVantageConnector.getWatchlists();
+		for (WatchlistData w : ws) {
+			if (w.getName().equals(watchlistName)) {
+				return getWatchlistById(w.getId());
+			}
+		}
+		return null;
+	}
+
+	private static List<Instrument> getWatchlistById(String watchlistId) throws Exception {
 //		System.out.println("\ngetWatchlist");
 
 		URL url = new URL("https://api.ig.com/gateway/deal/watchlists/" + watchlistId);
@@ -356,7 +336,7 @@ public class IGConnector {
 		}
 	}
 
-	static List<WatchlistData> getWatchlists() throws Exception {
+	public static List<WatchlistData> getWatchlists() throws Exception {
 //		System.out.println("\ngetWatchlist");
 
 		URL url = new URL("https://api.ig.com/gateway/deal/watchlists/");
@@ -400,7 +380,7 @@ public class IGConnector {
 		conn.setRequestMethod("GET");
 		conn.setRequestProperty("Accept", "application/json; charset=UTF-8");
 		conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-		conn.setRequestProperty("X-IG-API-KEY", currentCredentials.getKey());
+		conn.setRequestProperty("X-IG-API-KEY", API_KEY);
 		conn.setRequestProperty("VERSION", version);
 		conn.setRequestProperty("CST", CST);
 		conn.setRequestProperty("X-SECURITY-TOKEN", XSECURITYTOKEN);

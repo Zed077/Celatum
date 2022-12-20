@@ -1,19 +1,21 @@
 package com.celatum.service;
 
 //Import required java libraries
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TreeMap;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
-import com.celatum.data.IGConnector;
 import com.celatum.data.Instrument;
 import com.celatum.data.SerieItem;
 import com.celatum.service.json.InstrumentStats;
@@ -28,16 +30,13 @@ public class TestServlet extends HttpServlet {
 
 	public void init() throws ServletException {
 		try {
-			// Connect
-			IGConnector.connect();
-
 			// Get list of instruments in scope
-			instruments = IGConnector.getWatchlist(IGConnector.TESTWATCHLIST);
+			instruments = DataAccessOrchestrator.getTestWatchlist();
 
 			// Histories
 			histories = new ArrayList<HistoricalData>();
 			for (Instrument id : instruments) {
-				HistoricalData hd = new HistoricalData(id, false);
+				HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, false);
 				histories.add(hd);
 			}
 		} catch (Exception e) {
@@ -51,7 +50,7 @@ public class TestServlet extends HttpServlet {
 			String method = request.getParameter("method");
 			if (method == null)
 				return;
-			
+
 			switch (method) {
 			case "sizing":
 				System.out.println("Sizing");
@@ -67,28 +66,25 @@ public class TestServlet extends HttpServlet {
 		}
 	}
 
-	public void processSizing(HttpServletRequest request, HttpServletResponse response)
-			throws Exception {
+	/**
+	 * http://localhost:12689/Celatum/HelloWorld?method=sizing
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	public void processSizing(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		try {
-			IGConnector.connect();
-			Collection<Instrument> instruments = IGConnector.getWatchlist(IGConnector.LIVEWATCHLIST);
-			
-			// Order the instruments
-			TreeMap<String, Instrument> tm = new TreeMap<String, Instrument>();
-			for(Instrument inst : instruments) {
-				tm.put(inst.getName(), inst);
-			}
-			instruments = tm.values();
-			
+			Collection<Instrument> instruments = DataAccessOrchestrator.getInstruments().values();
+
 			// Generate the sizing figures
 			List<InstrumentStats> stats = new ArrayList<InstrumentStats>();
 			for (Instrument inst : instruments) {
-				inst.println();
-				HistoricalData hd = new HistoricalData(inst, 3);
+//				inst.println();
+				HistoricalData hd = DataAccessOrchestrator.getHistoricalData(inst, 3);
+				if (hd == null) continue;
 				InstrumentStats is = new InstrumentStats(hd);
 				stats.add(is);
-				// TODO: remove, this is to test only
-				break;
 			}
 
 			String result = new ObjectMapper().writeValueAsString(stats);

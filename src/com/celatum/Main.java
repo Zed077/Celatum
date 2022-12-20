@@ -11,25 +11,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.celatum.algos.Algo;
-import com.celatum.algos.BreakoutAlgo;
 import com.celatum.algos.BreakoutAlgoG;
 import com.celatum.algos.BullishHammerAlgo;
 import com.celatum.algos.HLHHAlgo;
 import com.celatum.algos.ImprovedReferenceAlgo;
 import com.celatum.algos.LongRegressionAlgo;
-import com.celatum.algos.RaynerTeosAlgo;
-import com.celatum.algos.SP500Algo;
 import com.celatum.algos.SuperTrendAlgoNPO;
-import com.celatum.algos.shell.BasicShortShell;
 import com.celatum.algos.shell.BouncePeriodLowShell;
-import com.celatum.algos.shell.BreakoutLongShell;
-import com.celatum.algos.shell.LowerLowShortShell;
-import com.celatum.algos.shell.LowerLowShortShell2;
 import com.celatum.algos.shell.LowerLowShortShell3;
-import com.celatum.algos.shell.SuperTrendShell;
-import com.celatum.algos.shell.failed.OscillatorShell;
+import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
-import com.celatum.data.IGConnector;
 import com.celatum.data.Instrument;
 import com.celatum.trading.Order;
 import com.celatum.trading.Position;
@@ -41,11 +32,8 @@ public class Main {
 	public static List<Instrument> instruments;
 
 	public static void main(String args[]) throws Exception {
-		// Connect
-		IGConnector.connect();
-
 		// Get list of instruments in scope
-		instruments = IGConnector.getWatchlist(IGConnector.TESTWATCHLIST);
+		instruments = DataAccessOrchestrator.getTestWatchlist();
 
 		// Run
 		try {
@@ -62,7 +50,7 @@ public class Main {
 	 * @throws Exception
 	 */
 	private static void liveRun() throws Exception {
-		instruments = IGConnector.getWatchlist(IGConnector.LIVEWATCHLIST);
+		instruments = DataAccessOrchestrator.getLiveWatchlist();
 		
 //		runAlgoAggregate(new BullishHammerAlgo(), true, false); // 8.2% but with high trade perf
 //		runAlgoAggregate(new HLHHAlgo(), false, false); // 37.7%
@@ -85,7 +73,7 @@ public class Main {
 		// Histories
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
 		for (Instrument id : instruments) {
-			HistoricalData hd = new HistoricalData(id, true);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, true);
 			histories.add(hd);
 		}
 		
@@ -164,7 +152,7 @@ public class Main {
 
 //		runAlgoAggregate(new BreakoutAlgo(), false, false);
 //		runAlgoAggregate(new SP500Algo(), false, true);
-		instruments = IGConnector.getWatchlist(IGConnector.LIVEWATCHLIST);
+		instruments = DataAccessOrchestrator.getLiveWatchlist();
 		runAlgoAggregate(new LowerLowShortShell3(), false, true);
 //		runAlgoSeparate(new LowerLowShortShell3(), false, true);
 //		runAlgoSeparate(new BreakoutShortShell(), false, false);
@@ -188,7 +176,7 @@ public class Main {
 	 * @throws Exception
 	 */
 	private static void runBestAlgos(boolean IGLoad, boolean view) throws Exception {
-		instruments = IGConnector.getWatchlist(IGConnector.LIVEWATCHLIST);
+		instruments = DataAccessOrchestrator.getLiveWatchlist();
 		
 		// Algos
 		List<Algo> algos = new ArrayList<Algo>();
@@ -203,7 +191,7 @@ public class Main {
 		// Histories
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
 		for (Instrument id : instruments) {
-			HistoricalData hd = new HistoricalData(id, IGLoad);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, IGLoad);
 			histories.add(hd);
 		}
 
@@ -225,7 +213,7 @@ public class Main {
 		// Make sure we have all the history we need
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
 		for (Instrument id : instruments) {
-			HistoricalData hd = new HistoricalData(id, IGLoad);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, IGLoad);
 			histories.add(hd);
 		}
 
@@ -251,7 +239,7 @@ public class Main {
 
 		ExecutorService eservice = Executors.newFixedThreadPool(Main.NTHREAD);
 		for (Instrument id : instruments) {
-			HistoricalData hd = new HistoricalData(id, IGLoad);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, IGLoad);
 			BookOfRecord bor = new BookOfRecord();
 			Algo a = algo.getInstance();
 

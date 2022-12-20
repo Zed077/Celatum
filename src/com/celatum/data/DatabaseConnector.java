@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
@@ -111,20 +112,74 @@ public class DatabaseConnector {
 		}
 	}
 
-//	public static void updateInstrument(InstrumentData inst) throws SQLException {
-//		instruments = null;
-//
-//		try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
-//				"Abacus2020")) {
-//			Statement statement = connection.createStatement();
-//			String query = "UPDATE public.instruments set epic='" + inst.epic + "', description='" + inst.description
-//					+ "' where symbol='" + inst.symbol + "'";
-//			System.out.println(query);
-//			statement.execute(query);
-//		} catch (SQLException e) {
-//			throw e;
-//		}
-//	}
+	public static void updateInstruments(Collection<Instrument> instruments) throws SQLException {
+		try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
+				"Abacus2020")) {
+			for (Instrument inst : instruments) {
+
+				// Try updating first
+				String sqlName = inst.getName().replaceAll("'", "''");
+				
+				Statement statement = connection.createStatement();
+				String query = "INSERT INTO public.instruments VALUES ('" 
+						+ inst.getEpic() + "', '" 
+						+ sqlName + "', '"
+						+ inst.getExpiry() + "', '" 
+						+ inst.getType() + "', '" 
+						+ inst.getChartCode() + "', '" 
+						+ inst.getNewsCode() + "', '"
+						+ inst.getAVCode() + "', '"
+						+ inst.isIGDataAvailable() + "', '"
+						+ inst.getIGUKMultiplier() + "', '"
+						+ inst.marginFactor.getContractSize() + "', '"
+						+ inst.marginFactor.getUnit() + "', '"
+						+ inst.marginFactor.getMaxPositionSize() + "', '"
+						+ inst.marginFactor.getDepositFactorPercent() + "', '"
+						+ inst.marginFactor.getMinControlledRiskStopDistance() + "') "
+						+ "ON CONFLICT (epic) DO NOTHING";
+//				System.out.println(query);
+				statement.execute(query);
+
+			}
+		} catch (SQLException e) {
+			throw e;
+		}
+	}
+	
+	public static void loadInstruments() throws Exception {
+		Class.forName("org.postgresql.Driver");
+		Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
+				"Abacus2020");
+		Statement statement = connection.createStatement();
+
+		ResultSet resultSet = statement.executeQuery(
+				"SELECT * FROM public.instruments");
+
+		while (resultSet.next()) {
+			String name = resultSet.getString("name");
+			String epic = resultSet.getString("epic");
+			String expiry = resultSet.getString("expiry");
+			
+			Instrument inst = Instrument.getInstrument(name, epic, expiry);
+			inst.setChartCode(resultSet.getString("chartCode"));
+			inst.setNewsCode(resultSet.getString("newsCode"));
+			inst.setType(resultSet.getString("type"));
+			inst.setIGDataAvailable(resultSet.getBoolean("ig_data_available"));
+			inst.setIGUKMultiplier(resultSet.getInt("ig_uk_multiplier"));
+			inst.setAVCode(resultSet.getString("av_code"));
+			
+			double maxPositionSize = resultSet.getDouble("maxPositionSize");
+			double depositFactorPercent = resultSet.getDouble("depositFactorPercent");
+			int contractSize = resultSet.getInt("contractSize");
+			MarginFactorData mf = new MarginFactorData(maxPositionSize, depositFactorPercent, contractSize);
+
+			double minControlledRiskStopDistance = resultSet.getDouble("minControlledRiskStopDistance");
+			String unit = resultSet.getString("unit");
+			mf.setMinControlledRiskStopDistance(minControlledRiskStopDistance, unit);
+			
+			inst.marginFactor = mf;
+		}
+	}
 
 	public static void updateHistoricalData(HistoricalData hd) throws SQLException {
 		try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",

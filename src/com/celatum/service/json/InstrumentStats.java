@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonIgnoreProperties({ "stopLossDistancePercent", "maxLossPercent", "maxContractsStd", "minContractsStd",
-		"atrPercent", "maxNotionalStd", "maxNotionalATR", "contractSize", "accountSize", "latestPrice"})
-@JsonPropertyOrder({ "instrumentName", "minContractsATR", "maxContractsATR", "stopDistanceATR" })
+		"atrPercent", "maxNotionalStd", "maxNotionalATR", "contractSize", "accountSize"})
+@JsonPropertyOrder({ "instrumentName", "minContractsATR", "maxContractsATR", "stopDistanceATR", "latestPrice" })
 public class InstrumentStats {
 	private String instrumentName;
 	private double stopLossDistancePercent = 0.5 / 100.0;
@@ -28,7 +28,7 @@ public class InstrumentStats {
 
 	public InstrumentStats(HistoricalData hd) {
 		hd.resetReferenceIndex();
-		latestPrice = hd.midClose.get(0);
+		latestPrice = hd.midClose.get(0) / hd.instrument.getIGUKMultiplier();
 		accountSize = IGConnector.getAccountBalance();
 
 		maxNotionalStd = accountSize * maxLossPercent / stopLossDistancePercent;

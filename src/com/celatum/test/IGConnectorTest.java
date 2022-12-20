@@ -6,14 +6,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.celatum.data.IGConnector;
+import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.Instrument;
-import com.celatum.data.WatchlistData;
 
 class IGConnectorTest {
 	@BeforeEach
 	void setUp() throws Exception {
-		IGConnector.connect();
 	}
 
 	@AfterEach
@@ -21,26 +19,25 @@ class IGConnectorTest {
 	}
 
 	@Test
-	void testGetWatchlists() throws Exception {
-		List<WatchlistData> ws = IGConnector.getWatchlists();
-		for(WatchlistData w : ws) {
-			System.out.println(w);
-		}
-	}
-
-	@Test
 	void testGetWatchlist() throws Exception {
+		Instrument cs = null;
+		
 		System.out.println("Live Watchlist\n");
-		List<Instrument> is = IGConnector.getWatchlist("test");
+		List<Instrument> is = DataAccessOrchestrator.getLiveWatchlist();
 		for(Instrument i : is) {
 			System.out.println(i);
 		}
 		
 		System.out.println("\nTest Watchlist");
-		is = IGConnector.getWatchlist("test");
+		is = DataAccessOrchestrator.getTestWatchlist();
 		for(Instrument i : is) {
 			System.out.println(i);
+			if (i.getName().equals("Credit Suisse Group AG (CH)")) {
+				cs = i;
+			}
 		}
+		
+		DataAccessOrchestrator.getHistoricalData(cs, 1);
 	}
 }
 

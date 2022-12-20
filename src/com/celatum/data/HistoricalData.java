@@ -1,7 +1,6 @@
 package com.celatum.data;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 
 import com.celatum.maths.Calc;
@@ -33,67 +32,19 @@ public class HistoricalData implements Cloneable {
 	}
 
 	/**
-	 * Load data from IG by default
+	 * Create an empty historical data class
 	 * 
 	 * @param instrument
 	 */
-	public HistoricalData(Instrument instrument) {
-		this(instrument, true);
+	HistoricalData(Instrument instrument) {
+		this.instrument = instrument;
+	}
+	
+	public static HistoricalData getEmptyHistoricalData (Instrument instrument) {
+		return new HistoricalData(instrument);
 	}
 
-	public HistoricalData(Instrument instrument, boolean IGLoad) {
-		try {
-			this.instrument = instrument;
-
-			if (IGLoad) {
-				// Get penultimate recorded date from DB
-				Date startDate = DatabaseConnector.getLastUpdatedDate(instrument);
-
-				// Obtain new IG prices from that date onward
-				IGConnector.getHistoricalPrices(this, startDate);
-
-				// Store prices in DB
-				DatabaseConnector.updateHistoricalData(this);
-			}
-
-			// Get full list of prices from DB
-			this.empty();
-			DatabaseConnector.getHistoricalData(this);
-
-			processData();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-	}
-
-	/**
-	 * Loads last x months of data from IG but does not store it in DB.
-	 * 
-	 * @param instrument
-	 */
-	public HistoricalData(Instrument instrument, int nMonths) {
-		try {
-			this.instrument = instrument;
-
-			// 3 months ago
-			Calendar calendar = Calendar.getInstance();
-			calendar.add(Calendar.MONTH, -nMonths);
-			Date startDate = calendar.getTime();
-
-			// Obtain new IG prices from that date onward
-			IGConnector.getHistoricalPrices(this, startDate);
-
-			processData();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-	}
-
-	private void processData() {
+	void processData() {
 		// Compute mid
 		midHigh = Calc.mid(askHigh, bidHigh);
 		midLow = Calc.mid(askLow, bidLow);
@@ -137,7 +88,7 @@ public class HistoricalData implements Cloneable {
 		return askHigh.getDate(0);
 	}
 
-	private void empty() {
+	void empty() {
 		askHigh = new Serie();
 		askLow = new Serie();
 		askOpen = new Serie();

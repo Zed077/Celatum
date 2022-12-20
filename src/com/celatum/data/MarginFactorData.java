@@ -5,6 +5,7 @@ public class MarginFactorData {
 	private double depositFactorPercent;
 	private double minControlledRiskStopDistance = 0;
 	private int contractSize;
+	private String unit;
 
 	public MarginFactorData(double maxPositionSize, double depositFactorPercent, int contractSize) {
 		this.maxPositionSize = maxPositionSize;
@@ -29,8 +30,13 @@ public class MarginFactorData {
 	}
 
 	void setMinControlledRiskStopDistance(double minControlledRiskStopDistance, String unit) {
+		this.unit = unit;
 		if (unit.equals("POINTS")) {
 			this.minControlledRiskStopDistance = minControlledRiskStopDistance;
 		}
+	}
+
+	public String getUnit() {
+		return unit;
 	}
 }
