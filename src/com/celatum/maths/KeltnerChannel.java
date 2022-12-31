@@ -11,7 +11,7 @@ public class KeltnerChannel {
 
 	public static Serie[] calc(HistoricalData hd, int nPeriods, double multiplier) {
 		// Cache
-		String key = hd.getEpic() + nPeriods + multiplier;
+		String key = hd.getCode() + nPeriods + multiplier;
 		Serie[] channels = cache.get(key);
 		if (channels != null)
 			return clone(channels);

@@ -18,6 +18,8 @@ import java.util.Vector;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.celatum.data.Instrument.Source;
+
 public class AlphaVantageConnector {
 	private static String CST;
 	private static String XSECURITYTOKEN;
@@ -116,7 +118,7 @@ public class AlphaVantageConnector {
 		// Fetch Data
 		// https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=IBM&interval=5min&apikey=demo
 		URL url = new URL("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol="
-				+ hd.instrument.getEpic() + "?resolution=DAY&pageSize=0&from=" + startDateTime + "&to=" + endDateTime);
+				+ hd.instrument.getCode(Source.AV_CODE) + "?resolution=DAY&pageSize=0&from=" + startDateTime + "&to=" + endDateTime);
 		HttpURLConnection conn = createGetConnection(url, "3");
 
 		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
@@ -192,7 +194,7 @@ public class AlphaVantageConnector {
 	public static MarginFactorData getMarginFactor(Instrument id) throws Exception {
 //		System.out.println("\ngetMarginFactor " + id.getName());
 
-		URL url = new URL("https://api.ig.com/gateway/deal/markets/" + id.getEpic());
+		URL url = new URL("https://api.ig.com/gateway/deal/markets/");
 		HttpURLConnection conn = createGetConnection(url, "3");
 
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
@@ -242,7 +244,7 @@ public class AlphaVantageConnector {
 				Thread.sleep(61000);
 				return getMarginFactor(id);
 			} else {
-				System.err.println(id.getName() + " " + id.getEpic());
+//				System.err.println(id.getName() + " " + id.getEpic());
 				throw e;
 			}
 		} finally {
@@ -323,7 +325,9 @@ public class AlphaVantageConnector {
 				String name = arr.getJSONObject(i).getString("instrumentName");
 				String epic = arr.getJSONObject(i).getString("epic");
 				String expiry = arr.getJSONObject(i).getString("expiry");
-				Instrument inst = Instrument.getInstrument(name, epic, expiry);
+				Instrument inst = Instrument.getInstrumentByName(name);
+//				inst.setEpic(epic);
+				inst.setExpiry(expiry);
 //				inst.println();
 				instruments.add(inst);
 			}

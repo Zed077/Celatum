@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
+import com.celatum.data.Instrument.Source;
 import com.celatum.data.Serie;
 import com.celatum.maths.Calc;
 import com.celatum.maths.HighLow;
@@ -317,7 +318,7 @@ class CalcTest {
 		close.put(gc.getTime(), 50.23);
 
 		HistoricalData hd = HistoricalData
-				.getEmptyHistoricalData(Instrument.getInstrument("B", "IX.D.SPTRD.DAILY.IP", "B"));
+				.getEmptyHistoricalData(Instrument.getInstrumentByName("IX.D.SPTRD.DAILY.IP"), Source.IG_EPIC);
 		hd.midHigh = high;
 		hd.midClose = close;
 		hd.midLow = low;

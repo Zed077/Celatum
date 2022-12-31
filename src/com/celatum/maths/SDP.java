@@ -15,7 +15,7 @@ public class SDP {
 
 	public static Serie calc(HistoricalData hd, int nPeriods) {
 		// Cache
-		String key = hd.getEpic() + nPeriods;
+		String key = hd.getCode() + nPeriods;
 		Serie res = cache.get(key);
 		if (res != null)
 			return res.clone();

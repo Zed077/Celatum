@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
 import com.celatum.data.Serie;
+import com.celatum.data.Instrument.Source;
 import com.celatum.maths.ATR;
 import com.celatum.maths.SuperTrend;
 
@@ -164,7 +165,7 @@ class SuperTrendTest {
 		low.put(d, 1772.6);
 		close.put(d, 1773);
 
-		hd = HistoricalData.getEmptyHistoricalData(Instrument.getInstrument("B", "IX.D.SPTRD.DAILY.IP", "B"));
+		hd = HistoricalData.getEmptyHistoricalData(Instrument.getInstrumentByName("IX.D.SPTRD.DAILY.IP"), Source.IG_EPIC);
 		hd.midHigh = high;
 		hd.midClose = close;
 		hd.midLow = low;

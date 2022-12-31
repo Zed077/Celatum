@@ -18,7 +18,10 @@ import java.util.Vector;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.celatum.data.Instrument.Source;
+
 public class IGConnector {
+	private static final int TIMEOUT = 61000;
 	private static String CST;
 	private static String XSECURITYTOKEN;
 	private static String defaultStartDateTime = "2006-01-01T07:00:00";
@@ -36,8 +39,9 @@ public class IGConnector {
 	 * of 72 hours while they are in use.
 	 * 
 	 * @throws IOException
+	 * @throws InterruptedException 
 	 */
-	static void connect(IGCredentials credentials) throws IOException {
+	static void connect(IGCredentials credentials) throws IOException, InterruptedException {
 		currentCredentials = credentials;
 
 		if (validUntilTime != null && (new Date()).before(validUntilTime))
@@ -60,6 +64,17 @@ public class IGConnector {
 		stream.write(out);
 
 		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
+		
+		if (conn.getResponseMessage().equals("Unauthorized")) {
+			if (errorCount < 1) {
+				System.out.print("Retrying in " + TIMEOUT/1000 + "s ");
+				errorCount++;
+				Thread.sleep(TIMEOUT);
+				connect(credentials);
+			} else {
+				System.exit(-1);
+			}
+		}
 
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
 			StringBuilder response = new StringBuilder();
@@ -131,7 +146,7 @@ public class IGConnector {
 		String endDateTime = IGDATEFORMAT.format(new Date());
 
 		// Fetch Data
-		URL url = new URL("https://api.ig.com/gateway/deal/prices/" + hd.instrument.getEpic()
+		URL url = new URL("https://api.ig.com/gateway/deal/prices/" + hd.instrument.getCode(Source.IG_EPIC)
 				+ "?resolution=DAY&pageSize=0&from=" + startDateTime + "&to=" + endDateTime);
 		HttpURLConnection conn = createGetConnection(url, "3");
 
@@ -196,7 +211,7 @@ public class IGConnector {
 			if (errorCount <= 1) {
 				System.out.println("Connection exception, retrying\n" + e.getMessage());
 				errorCount++;
-				Thread.sleep(61000);
+				Thread.sleep(TIMEOUT);
 				getHistoricalPrices(hd, startDate);
 			} else {
 				throw e;
@@ -209,7 +224,8 @@ public class IGConnector {
 	static void augmentInstrument(Instrument id) throws Exception {
 		System.out.print("augmentInstrument " + id.getName() + " ");
 
-		URL url = new URL("https://api.ig.com/gateway/deal/markets/" + id.getEpic());
+		String epic = id.getCode(Source.IG_EPIC);
+		URL url = new URL("https://api.ig.com/gateway/deal/markets/" + epic);
 		HttpURLConnection conn = createGetConnection(url, "3");
 		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
 
@@ -235,9 +251,9 @@ public class IGConnector {
 
 			// Codes
 			if (!jins.isNull("chartCode")) {
-				id.setChartCode(jins.getString("chartCode"));
+				id.setCode(Source.IG_CHART_CODE, jins.getString("chartCode"));
 			}
-			id.setNewsCode(jins.getString("newsCode"));
+			id.setCode(Source.IG_NEWS_CODE, jins.getString("newsCode"));
 
 			// Contract size
 			int contractSize = 1;
@@ -269,10 +285,10 @@ public class IGConnector {
 			if (errorCount <= 1) {
 				System.out.println("Connection exception, retrying\n" + e.getMessage());
 				errorCount++;
-				Thread.sleep(61000);
+				Thread.sleep(TIMEOUT);
 				augmentInstrument(id);
 			} else {
-				System.err.println(id.getName() + " " + id.getEpic() + " " + e.getMessage());
+				System.err.println(id.getName() + " " + epic + " " + e.getMessage());
 				throw e;
 			}
 		} finally {
@@ -343,7 +359,9 @@ public class IGConnector {
 				String name = arr.getJSONObject(i).getString("instrumentName");
 				String epic = arr.getJSONObject(i).getString("epic");
 				String expiry = arr.getJSONObject(i).getString("expiry");
-				Instrument inst = Instrument.getInstrument(name, epic, expiry);
+				Instrument inst = Instrument.getInstrumentByName(name);
+				inst.setCode(Source.IG_EPIC, epic);
+				inst.setExpiry(expiry);
 //				inst.println();
 				instruments.add(inst);
 			}

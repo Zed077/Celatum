@@ -1,17 +1,16 @@
-package com.celatum.service.json;
+package com.celatum.data;
 
-import com.celatum.data.HistoricalData;
-import com.celatum.data.IGConnector;
 import com.celatum.maths.ATR;
 import com.celatum.maths.ATRPercent;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonIgnoreProperties({ "stopLossDistancePercent", "maxLossPercent", "maxContractsStd", "minContractsStd",
+@JsonIgnoreProperties({ "instrumentCode", "stopLossDistancePercent", "maxLossPercent", "maxContractsStd", "minContractsStd",
 		"atrPercent", "maxNotionalStd", "maxNotionalATR", "contractSize", "accountSize"})
 @JsonPropertyOrder({ "instrumentName", "minContractsATR", "maxContractsATR", "stopDistanceATR", "latestPrice" })
 public class InstrumentStats {
 	private String instrumentName;
+	private String instrumentCode;
 	private double stopLossDistancePercent = 0.5 / 100.0;
 	private double maxLossPercent = 10.0 / 100.0;
 	private double maxContractsStd;
@@ -26,7 +25,7 @@ public class InstrumentStats {
 	private double latestPrice;
 	private double stopDistanceATR;
 
-	public InstrumentStats(HistoricalData hd) {
+	InstrumentStats(HistoricalData hd) {
 		hd.resetReferenceIndex();
 		latestPrice = hd.midClose.get(0) / hd.instrument.getIGUKMultiplier();
 		accountSize = IGConnector.getAccountBalance();
@@ -45,6 +44,18 @@ public class InstrumentStats {
 		stopDistanceATR = ATR.calc(hd, 30, ATR.Method.SMA).get(0);
 
 		instrumentName = hd.instrument.getName();
+		instrumentCode = hd.getCode();
+	}
+	
+	InstrumentStats(String instrumentName, String instrumentCode, double maxContractsATR, double minContractsATR,
+			double accountSize, double latestPrice, double stopDistanceATR) {
+		this.instrumentName = instrumentName;
+		this.instrumentCode = instrumentCode;
+		this.maxContractsATR = maxContractsATR;
+		this.minContractsATR = minContractsATR;
+		this.accountSize = accountSize;
+		this.latestPrice = latestPrice;
+		this.stopDistanceATR = stopDistanceATR;
 	}
 
 	private static double round(double value, int precision) {
@@ -105,5 +116,9 @@ public class InstrumentStats {
 
 	public double getStopDistanceATR() {
 		return round(stopDistanceATR, 2);
+	}
+
+	public String getInstrumentCode() {
+		return instrumentCode;
 	}
 }

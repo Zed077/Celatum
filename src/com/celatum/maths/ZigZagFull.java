@@ -28,7 +28,7 @@ public class ZigZagFull {
 
 	public static ZigZagFull calc(HistoricalData hd, int minPeriod) {
 		// Cache
-		String key = hd.getEpic() + minPeriod;
+		String key = hd.getCode() + minPeriod;
 		ZigZagFull res = cache.get(key);
 		if (res != null)
 			return res.clone(hd);
@@ -47,7 +47,7 @@ public class ZigZagFull {
 
 	public static ZigZagFull calc(HistoricalData hd, int minPeriod, double minPercent) {
 		// Cache
-		String key = hd.getEpic() + minPeriod + minPercent;
+		String key = hd.getCode() + minPeriod + minPercent;
 		ZigZagFull res = cache.get(key);
 		if (res != null)
 			return res.clone(hd);

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.Instrument;
+import com.celatum.data.Instrument.Source;
 
 class IGConnectorTest {
 	@BeforeEach
@@ -37,7 +38,7 @@ class IGConnectorTest {
 			}
 		}
 		
-		DataAccessOrchestrator.getHistoricalData(cs, 1);
+		DataAccessOrchestrator.getHistoricalData(cs, Source.IG_EPIC, 1);
 	}
 }
 

@@ -78,7 +78,7 @@ class SerieTest {
 		assertEquals(1, serie.size());
 		assertEquals(100, serie.get(0));
 
-		serie.removeReferenceIndex();
+		serie.resetReferenceIndex();
 		assertEquals(3, serie.size());
 
 		gc.set(2020-1900, 0, 2);

@@ -33,7 +33,7 @@ public class SP500Algo extends Algo {
 		}
 		
 		// Only invest on the SP500
-		if (hd.getEpic().equals("IX.D.SPTRD.DAILY.IP")) {
+		if (hd.getCode().equals("IX.D.SPTRD.DAILY.IP")) {
 			LongOrder order = new LongOrder(hd.instrument, getGroup(), hd.getReferenceDate(), hd.midHigh.get(0));
 			order.setStop(stop);
 			bor.addOrder(order);

@@ -3,10 +3,7 @@ package com.celatum.service;
 //Import required java libraries
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -17,31 +14,20 @@ import javax.servlet.http.HttpServletResponse;
 import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
-import com.celatum.data.SerieItem;
-import com.celatum.service.json.InstrumentStats;
+import com.celatum.data.Instrument.Source;
+import com.celatum.data.InstrumentStats;
+import com.celatum.service.json.AlgoRun;
+import com.celatum.service.json.AlgoRunPosition;
+import com.celatum.service.json.OHCL;
+import com.celatum.service.json.SerieItemJSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 //Extend HttpServlet class
 public class TestServlet extends HttpServlet {
-
-	private static List<Instrument> instruments;
-	private static List<HistoricalData> histories;
-
+	
 	public void init() throws ServletException {
-		try {
-			// Get list of instruments in scope
-			instruments = DataAccessOrchestrator.getTestWatchlist();
-
-			// Histories
-			histories = new ArrayList<HistoricalData>();
-			for (Instrument id : instruments) {
-				HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, false);
-				histories.add(hd);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		
 	}
 
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -53,17 +39,71 @@ public class TestServlet extends HttpServlet {
 
 			switch (method) {
 			case "sizing":
-				System.out.println("Sizing");
 				processSizing(request, response);
 				return;
-			default:
-				System.out.println("History");
+			case "runs":
+				processRuns(request, response);
+				return;
+			case "pnl":
+				algoRunPnL(request, response);
+				return;
+			case "history":
 				processHistory(request, response);
 				return;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void processRuns(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		String algorunref = request.getParameter("algorunref");
+		if (algorunref != null) {
+			algoRunInstruments(algorunref, request, response);
+		} else {
+			Collection<AlgoRun> runs = DataAccessOrchestrator.getRuns();
+			respond(response, runs);
+		}
+	}
+
+	public void algoRunInstruments(String algoRunRef, HttpServletRequest request, HttpServletResponse response)
+			throws JsonProcessingException, IOException {
+		String instrumentName = request.getParameter("instrumentname");
+		if (instrumentName != null) {
+			algoRunPositions(algoRunRef, instrumentName, request, response);
+		} else {
+			Collection<Instrument> instruments = DataAccessOrchestrator.getAlgoRunInstruments(algoRunRef);
+			respond(response, instruments);
+		}
+	}
+
+	/**
+	 * http://localhost:8080/Celatum/HelloWorld?method=pnl&algorunref=runAlgoAggregate_1671615417663_0
+	 * @param request
+	 * @param response
+	 * @throws JsonProcessingException
+	 * @throws IOException
+	 */
+	public void algoRunPnL(HttpServletRequest request, HttpServletResponse response)
+			throws JsonProcessingException, IOException {
+		String algoRunRef = request.getParameter("algorunref");
+		Collection<SerieItemJSON> res = SerieItemJSON.serialize(DataAccessOrchestrator.getAlgoRunPnL(algoRunRef));
+		respond(response, res);
+	}
+
+	/**
+	 * http://localhost:8080/Celatum/HelloWorld?method=runs&algorunref=runAlgoAggregate_1671615417663_0&instrumentname=Carrefour%20SA
+	 * @param algoRunRef
+	 * @param instrumentName
+	 * @param request
+	 * @param response
+	 * @throws JsonProcessingException
+	 * @throws IOException
+	 */
+	public void algoRunPositions(String algoRunRef, String instrumentName, HttpServletRequest request,
+			HttpServletResponse response) throws JsonProcessingException, IOException {
+		Collection<AlgoRunPosition> positions = DataAccessOrchestrator.getAlgoRunPositions(algoRunRef, instrumentName);
+		respond(response, positions);
 	}
 
 	/**
@@ -73,19 +113,11 @@ public class TestServlet extends HttpServlet {
 	 * @param response
 	 * @throws Exception
 	 */
-	public void processSizing(HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void processSizing(HttpServletRequest request, HttpServletResponse response) {
+		DataAccessOrchestrator.refreshInstrumentStatistics();
 		try {
 			Collection<Instrument> instruments = DataAccessOrchestrator.getInstruments().values();
-
-			// Generate the sizing figures
-			List<InstrumentStats> stats = new ArrayList<InstrumentStats>();
-			for (Instrument inst : instruments) {
-//				inst.println();
-				HistoricalData hd = DataAccessOrchestrator.getHistoricalData(inst, 3);
-				if (hd == null) continue;
-				InstrumentStats is = new InstrumentStats(hd);
-				stats.add(is);
-			}
+			Collection<InstrumentStats> stats = DataAccessOrchestrator.getInstrumentStatistics(instruments, Source.IG_EPIC);
 
 			String result = new ObjectMapper().writeValueAsString(stats);
 
@@ -97,16 +129,32 @@ public class TestServlet extends HttpServlet {
 			PrintWriter out = response.getWriter();
 			out.println(result);
 
-		} catch (JsonProcessingException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * http://localhost:8080/Celatum/HelloWorld?method=history&instrumentname=Carrefour%20SA
+	 * @param request
+	 * @param response
+	 * @throws ServletException
+	 * @throws IOException
+	 */
 	public void processHistory(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		String instrumentName = request.getParameter("instrumentname");
+		String algorunref = request.getParameter("algorunref");
+		Instrument inst = DataAccessOrchestrator.getInstruments().get(instrumentName);
+		if (inst == null) {
+			throw new RuntimeException("Instrument unknown: " + instrumentName);
+		}
+		
+		HistoricalData hist = DataAccessOrchestrator.getHistoricalData(algorunref, inst);
+		
 		try {
-			List<OHCL> firstInstrument = serialize(histories.get(0));
+			List<OHCL> firstInstrument = OHCL.serialize(hist);
 
 			String result = new ObjectMapper().writeValueAsString(firstInstrument);
 
@@ -128,58 +176,16 @@ public class TestServlet extends HttpServlet {
 		// do nothing.
 	}
 
-	private List<OHCL> serialize(HistoricalData history) {
-		System.out.println("Serializing " + history.getEpic() + " " + history.fullSize() + " elements");
-		ArrayList<OHCL> result = new ArrayList<>();
-		Iterator<SerieItem> O = history.midOpen.getAllEntries().iterator();
-		Iterator<SerieItem> H = history.midHigh.getAllEntries().iterator();
-		Iterator<SerieItem> C = history.midClose.getAllEntries().iterator();
-		Iterator<SerieItem> L = history.midLow.getAllEntries().iterator();
-		while (O.hasNext()) {
-			OHCL item = new OHCL();
-			SerieItem primer = O.next();
-			item.setTime(primer.getDate());
-			item.open = primer.getValue();
-			item.high = H.next().getValue();
-			item.close = C.next().getValue();
-			item.low = L.next().getValue();
+	private void respond(HttpServletResponse response, Object data)
+			throws JsonProcessingException, IOException {
+		String result = new ObjectMapper().writeValueAsString(data);
 
-			result.add(item);
-		}
-		System.out.println("Serializing complete");
-		return result;
-	}
-}
+		// Set response content type
+		response.setContentType("text/html");
+		response.setHeader("Access-Control-Allow-Origin", "*");
 
-//{ time: '2018-12-22', open: 75.16, high: 82.84, low: 36.16, close: 45.72 }
-class OHCL {
-	private Date time;
-	double open;
-	double high;
-	double close;
-	double low;
-
-	public String getTime() {
-		return time.toString();
-	}
-
-	public void setTime(Date time) {
-		this.time = time;
-	}
-
-	public double getOpen() {
-		return open;
-	}
-
-	public double getHigh() {
-		return high;
-	}
-
-	public double getClose() {
-		return close;
-	}
-
-	public double getLow() {
-		return low;
+		// Actual logic goes here.
+		PrintWriter out = response.getWriter();
+		out.println(result);
 	}
 }

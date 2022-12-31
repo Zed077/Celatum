@@ -11,7 +11,7 @@ public class SuperTrend {
 
 	public static Serie calc(HistoricalData hd, int period, double multiplier, ATR.Method method) {
 		// Cache
-		String key = hd.getEpic() + period + multiplier + method;
+		String key = hd.getCode() + period + multiplier + method;
 		Serie res = cache.get(key);
 		if (res != null)
 			return res.clone();

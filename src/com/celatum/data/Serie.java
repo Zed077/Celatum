@@ -40,6 +40,11 @@ public class Serie implements Cloneable {
 		hashCode = 0;
 	}
 
+	/**
+	 * Overrides entry if it already exists
+	 * @param date
+	 * @param value
+	 */
 	public void put(Date date, double value) {
 		SerieItem si = new SerieItem(date, value);
 		this.put(si);
@@ -47,6 +52,11 @@ public class Serie implements Cloneable {
 	
 	public void removeOldest() {
 		dataset.remove(dataset.firstEntry().getKey());
+		cacheValues();
+	}
+	
+	public void remove(Date d) {
+		SerieItem i = dataset.remove(d);
 		cacheValues();
 	}
 
@@ -148,7 +158,7 @@ public class Serie implements Cloneable {
 		}
 	}
 
-	public void removeReferenceIndex() {
+	public void resetReferenceIndex() {
 		referenceIndex = 0;
 	}
 
@@ -158,6 +168,7 @@ public class Serie implements Cloneable {
 		for (SerieItem si : dmap.values()) {
 			cache.add(si);
 		}
+		hashCode = 0;
 	}
 
 	private int index(int i) {

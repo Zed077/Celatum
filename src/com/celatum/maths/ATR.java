@@ -14,7 +14,7 @@ public class ATR {
 
 	public static Serie calc(HistoricalData hd, int period, Method method) {		
 		// Cache
-		String key = hd.getEpic() + period + method;
+		String key = hd.getCode() + period + method;
 		Serie res = cache.get(key);
 		if (res != null)
 			return res.clone();

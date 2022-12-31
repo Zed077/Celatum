@@ -320,7 +320,7 @@ public class BookOfRecord {
 		String res = 
 				getActiveOrders(referenceDate).size() + " Active Orders, " + getCancelledOrders(referenceDate).size()
 						+ " Closed Orders, " + getActivePositions(referenceDate).size() + " Active Positions, "
-						+ getClosedPositions(referenceDate).size() + " Closed Positions/n";
+						+ getClosedPositions(referenceDate).size() + " Closed Positions\n";
 
 		NumberFormat nform = NumberFormat.getInstance();
 		nform.setMaximumFractionDigits(0);
@@ -334,22 +334,22 @@ public class BookOfRecord {
 		NumberFormat defaultFormat = NumberFormat.getPercentInstance();
 		defaultFormat.setMinimumFractionDigits(1);
 
-		res.concat("Value " + nform.format(returnAbsolute) + " Costs "
-				+ nform.format(costsToDate(referenceDate)) + " Yearly Return " + defaultFormat.format(returnPercent) + "/n");
+		res += "Value " + nform.format(returnAbsolute) + " Costs "
+				+ nform.format(costsToDate(referenceDate)) + " Yearly Return " + defaultFormat.format(returnPercent) + "\n";
 
 		// Performance
-		res.concat("Lowest PnL " + nform.format(lowestPnL()) + " Max Drawdown "
-				+ nform.format(this.maxDrawdown()) + " Avg Trade Perf " + defaultFormat.format(averagePerformance()) + "/n");
+		res += "Lowest PnL " + nform.format(lowestPnL()) + " Max Drawdown "
+				+ nform.format(this.maxDrawdown()) + " Avg Trade Perf " + defaultFormat.format(averagePerformance()) + "\n";
 
 		// Active orders
-		res.concat("\nActive Orders\n");
+		res += "\nActive Orders\n";
 		for (Order o : getActiveOrders(referenceDate)) {
-			res.concat(o + "/n");
+			res += o + "\n";
 		}
 		// Active positions
-		res.concat("\nActive Positions\n");
+		res += "\nActive Positions\n";
 		for (Position p : getActivePositions(referenceDate)) {
-			res.concat(p + "/n");
+			res += p + "\n";
 		}
 		
 		return res;

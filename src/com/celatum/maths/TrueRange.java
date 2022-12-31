@@ -14,7 +14,7 @@ public class TrueRange {
 
 	public static Serie calc(HistoricalData hd, Method method) {
 		// Cache
-		String key = hd.getEpic() + method;
+		String key = hd.getCode() + method;
 		Serie res = cache.get(key);
 		if (res != null)
 			return res.clone();

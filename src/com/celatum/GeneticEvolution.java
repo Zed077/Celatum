@@ -42,6 +42,7 @@ import com.celatum.algos.exit.TimedExit;
 import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
+import com.celatum.data.Instrument.Source;
 
 public class GeneticEvolution {
 	private Vector<EntryCondition> entryConditions = new Vector<EntryCondition>();
@@ -56,12 +57,12 @@ public class GeneticEvolution {
 	private Vector<HistoricalData> histories = new Vector<HistoricalData>();
 	private AlgoRunner noGeneAlgo;
 
-	public GeneticEvolution(List<Instrument> instruments) {
+	public GeneticEvolution(List<Instrument> instruments, Source s) {
 		percentFormat.setMaximumFractionDigits(2);
 		numberFormat.setMaximumFractionDigits(0);
 
 		for (Instrument id : instruments) {
-			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, false);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, s, false);
 			histories.add(hd);
 		}
 	}

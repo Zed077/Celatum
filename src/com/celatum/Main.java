@@ -22,6 +22,7 @@ import com.celatum.algos.shell.LowerLowShortShell3;
 import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
+import com.celatum.data.Instrument.Source;
 import com.celatum.trading.Order;
 import com.celatum.trading.Position;
 import com.celatum.view.Chart;
@@ -37,8 +38,8 @@ public class Main {
 
 		// Run
 		try {
-//			backTest();
-			liveRun();
+			backTest();
+//			liveRun();
 //			runBestAlgos(false, false);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -73,7 +74,7 @@ public class Main {
 		// Histories
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
 		for (Instrument id : instruments) {
-			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, true);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, Source.IG_EPIC, true);
 			histories.add(hd);
 		}
 		
@@ -191,7 +192,7 @@ public class Main {
 		// Histories
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
 		for (Instrument id : instruments) {
-			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, IGLoad);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, Source.IG_EPIC, IGLoad);
 			histories.add(hd);
 		}
 
@@ -213,7 +214,7 @@ public class Main {
 		// Make sure we have all the history we need
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
 		for (Instrument id : instruments) {
-			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, IGLoad);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, Source.IG_EPIC, IGLoad);
 			histories.add(hd);
 		}
 
@@ -228,8 +229,12 @@ public class Main {
 		bor.printStats(new Date());
 
 		// View
-		if (view)
-			Chart.createAndShowGUI(histories, algo, bor, true);
+		if (view) {
+			List<Algo> algos = new ArrayList<>();
+			algos.add(algo);
+			DataAccessOrchestrator.saveAlgoRun(bor, algos, "runAlgoAggregate");
+//			Chart.createAndShowGUI(histories, algo, bor, true);
+		}
 	}
 
 	private static void runAlgoSeparate(Algo algo, boolean IGLoad, boolean view) throws Exception {
@@ -239,7 +244,7 @@ public class Main {
 
 		ExecutorService eservice = Executors.newFixedThreadPool(Main.NTHREAD);
 		for (Instrument id : instruments) {
-			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, IGLoad);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, Source.IG_EPIC, IGLoad);
 			BookOfRecord bor = new BookOfRecord();
 			Algo a = algo.getInstance();
 
@@ -263,7 +268,7 @@ public class Main {
 	}
 
 	private static void evolveAlgo(Algo algo) throws InterruptedException {
-		GeneticEvolution g = new GeneticEvolution(instruments);
+		GeneticEvolution g = new GeneticEvolution(instruments, Source.IG_EPIC);
 		g.run(algo);
 	}
 }

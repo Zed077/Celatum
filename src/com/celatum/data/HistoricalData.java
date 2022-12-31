@@ -3,10 +3,12 @@ package com.celatum.data;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.celatum.data.Instrument.Source;
 import com.celatum.maths.Calc;
 
 public class HistoricalData implements Cloneable {
 	public Instrument instrument;
+	private Source source;
 
 	public Serie askHigh = new Serie();
 	public Serie askLow = new Serie();
@@ -36,15 +38,16 @@ public class HistoricalData implements Cloneable {
 	 * 
 	 * @param instrument
 	 */
-	HistoricalData(Instrument instrument) {
+	HistoricalData(Instrument instrument, Source s) {
 		this.instrument = instrument;
+		this.source = s;
 	}
 	
-	public static HistoricalData getEmptyHistoricalData (Instrument instrument) {
-		return new HistoricalData(instrument);
+	public static HistoricalData getEmptyHistoricalData (Instrument instrument, Source s) {
+		return new HistoricalData(instrument, s);
 	}
 
-	void processData() {
+	void initialiseData() {
 		// Compute mid
 		midHigh = Calc.mid(askHigh, bidHigh);
 		midLow = Calc.mid(askLow, bidLow);
@@ -119,7 +122,7 @@ public class HistoricalData implements Cloneable {
 
 	public void resetReferenceIndex() {
 		for (Serie s : registeredSeries) {
-			s.removeReferenceIndex();
+			s.resetReferenceIndex();
 		}
 	}
 
@@ -167,7 +170,7 @@ public class HistoricalData implements Cloneable {
 		return clone;
 	}
 
-	public String getEpic() {
-		return this.instrument.getEpic();
+	public String getCode() {
+		return this.instrument.getCode(source);
 	}
 }
