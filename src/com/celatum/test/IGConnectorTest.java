@@ -37,8 +37,6 @@ class IGConnectorTest {
 				cs = i;
 			}
 		}
-		
-		DataAccessOrchestrator.getHistoricalData(cs, Source.IG_EPIC, 1);
 	}
 }
 

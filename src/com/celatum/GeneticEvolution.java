@@ -62,7 +62,7 @@ public class GeneticEvolution {
 		numberFormat.setMaximumFractionDigits(0);
 
 		for (Instrument id : instruments) {
-			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, s, false);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, s);
 			histories.add(hd);
 		}
 	}

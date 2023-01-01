@@ -192,7 +192,8 @@ public class DatabaseConnector {
 				+ stats.getMinContractsATR() + "', '" 
 				+ stats.getMaxContractsATR() + "', '"
 				+ stats.getStopDistanceATR() + "', '"
-				+ stats.getLatestPrice() + "')";
+				+ stats.getLatestPrice() + "', '"
+				+ stats.getBidAskSpreadPercent() + "')";
 //		System.out.println(query);
 		statement.executeUpdate(query);
 		
@@ -222,7 +223,8 @@ public class DatabaseConnector {
 			double accountSize = resultSet.getDouble("account_size");
 			double latestPrice = resultSet.getDouble("latest_price");
 			double stopDistanceATR = resultSet.getDouble("stop_distance_atr");
-			stats = new InstrumentStats(instrumentName, instrumentCode, maxContractsATR, minContractsATR, accountSize, latestPrice, stopDistanceATR);
+			double bidAskSpreadPercent = resultSet.getDouble("bid_ask_spread_percent");
+			stats = new InstrumentStats(instrumentName, instrumentCode, maxContractsATR, minContractsATR, accountSize, latestPrice, stopDistanceATR, bidAskSpreadPercent);
 		}
 		return stats;
 	}
@@ -245,6 +247,12 @@ public class DatabaseConnector {
 		statement.execute(query);
 	}
 	
+	/**
+	 * Return the instrument codes of the saved histories
+	 * @return
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
 	public static Collection<String> getSavedCodes() throws SQLException, ClassNotFoundException {
 		Connection connection = getConnection();
 		Statement statement = connection.createStatement();

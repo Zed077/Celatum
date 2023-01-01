@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import com.celatum.BookOfRecord;
 import com.celatum.algos.Algo;
@@ -86,40 +87,73 @@ public class DataAccessOrchestrator {
 	
 	public static void refreshInstrumentStatistics() {
 		// Only refresh weekly
-		try {
-			Collection<Instrument> instruments = DataAccessOrchestrator.getInstruments().values();
-			Date today = new Date();
-			GregorianCalendar gc = new GregorianCalendar();
+		Collection<Instrument> instruments = DataAccessOrchestrator.getInstruments().values();
+		Date today = new Date();
+		GregorianCalendar gc = new GregorianCalendar();
 
-			// Generate the sizing figures
-			for (Instrument inst : instruments) {
-				Date instDate = inst.getLastUpdated();
-				if (instDate == null) {
-					instDate = new Date();
-				}
-				gc.setTime(instDate);
-				gc.add(GregorianCalendar.DAY_OF_MONTH, INSTRUMENT_UPDATE_TIME);
-				Date updateDate = gc.getTime();
-				
-				if (today.after(updateDate)) {
-					HistoricalData hd = DataAccessOrchestrator.getHistoricalData(inst, Source.IG_EPIC, 3);
+		// Generate the sizing figures
+		for (Instrument inst : instruments) {
+			// Only update every week
+			Date instDate = inst.getLastUpdated();
+			if (instDate == null) {
+				instDate = new Date();
+			}
+			gc.setTime(instDate);
+			gc.add(GregorianCalendar.DAY_OF_MONTH, INSTRUMENT_UPDATE_TIME);
+			Date updateDate = gc.getTime();
+
+			if (today.after(updateDate)) {
+				// History to be used to compute the stats
+				HistoricalData hd = null;
+
+				try {
+					// Check if we already have some historical records
+					Date lastDate = DatabaseConnector.getLastUpdatedDate(inst, Source.IG_EPIC);
+					if (lastDate != null) {
+						refreshSavedHistories();
+						hd = new HistoricalData(inst, Source.IG_EPIC);
+						DatabaseConnector.getHistoricalData(hd);
+						hd.initialiseData();
+					} else if (inst.isIGDataAvailable()) {
+						// Take date over a period of 3 months
+						Calendar calendar = Calendar.getInstance();
+						calendar.add(Calendar.MONTH, -3);
+						Date startDate = calendar.getTime();
+
+						hd = new HistoricalData(inst, Source.IG_EPIC);
+						IGConnector.connect(IGCredentials.UK_Credentials);
+						IGConnector.getHistoricalPrices(hd, startDate);
+						hd.initialiseData();
+					} else if (!inst.getCode(Source.AV_CODE).equals("null")) {
+						saveHistory(inst);
+						hd = new HistoricalData(inst, Source.AV_CODE);
+						DatabaseConnector.getHistoricalData(hd);
+						hd.initialiseData();
+					}
+
 					if (hd == null)
 						continue;
 					InstrumentStats is = new InstrumentStats(hd);
 					DatabaseConnector.saveInstrumentStatistics(is);
+				} catch (Exception e) {
+					System.err.println("Could not compute stats for " + inst.getName());
+					e.printStackTrace();
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
 		}
 	}
 	
-	public static Collection<InstrumentStats> getInstrumentStatistics(Collection<Instrument> insts, Source s) {
+	/**
+	 * Stats from IG
+	 * @param insts
+	 * @param s
+	 * @return
+	 */
+	public static Collection<InstrumentStats> getInstrumentStatistics(Collection<Instrument> insts) {
 		ArrayList<InstrumentStats> res = new ArrayList<>();
 		try {
 			for (Instrument i : insts) {
-				InstrumentStats is = DatabaseConnector.getInstrumentStatistics(i, s);
+				InstrumentStats is = DatabaseConnector.getInstrumentStatistics(i, Source.IG_CHART_CODE);
 				res.add(is);
 			}
 		} catch (Exception e) {
@@ -130,6 +164,21 @@ public class DataAccessOrchestrator {
 	}
 
 	/**
+	 * Stats from IG
+	 * @param inst
+	 * @return
+	 */
+	public static InstrumentStats getInstrumentStatistics(Instrument inst) {
+		try {
+			return DatabaseConnector.getInstrumentStatistics(inst, Source.IG_CHART_CODE);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return null;
+	}
+
+	/**
 	 * Get full historical data available from the database Refreshes the database
 	 * if refresh is true
 	 * 
@@ -137,28 +186,10 @@ public class DataAccessOrchestrator {
 	 * @param refresh
 	 * @return
 	 */
-	public static HistoricalData getHistoricalData(Instrument instrument, Source s, boolean refresh) {
+	public static HistoricalData getHistoricalData(Instrument instrument, Source s) {
 		HistoricalData hd = new HistoricalData(instrument, s);
 
 		try {
-			if (refresh) {
-				if (instrument.isIGDataAvailable()) {
-					// Get penultimate recorded date from DB
-					Date startDate = DatabaseConnector.getLastUpdatedDate(instrument, s);
-
-					// Obtain new IG prices from that date onward
-					IGConnector.connect(IGCredentials.UK_Credentials);
-					IGConnector.getHistoricalPrices(hd, startDate);
-
-					// Store prices in DB
-					DatabaseConnector.updateHistoricalData(hd);
-				} else if (!instrument.getCode(Source.AV_CODE).equals("null")) {
-					System.out.println("Fetch data from AV!! for " + instrument.getName());
-				}
-			}
-
-			// Get full list of prices from DB
-			hd.empty();
 			DatabaseConnector.getHistoricalData(hd);
 			hd.initialiseData();
 			return hd;
@@ -169,23 +200,76 @@ public class DataAccessOrchestrator {
 
 		return null;
 	}
-	
+
 	public static void refreshSavedHistories() {
 		// Get saved history codes
-		
-		
-		if (instrument.isIGDataAvailable()) {
-			// Get penultimate recorded date from DB
-			Date startDate = DatabaseConnector.getLastUpdatedDate(instrument, s);
+		Collection<String> savedCodes = null;
+		try {
+			savedCodes = DatabaseConnector.getSavedCodes();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
 
-			// Obtain new IG prices from that date onward
-			IGConnector.connect(IGCredentials.UK_Credentials);
-			IGConnector.getHistoricalPrices(hd, startDate);
+		for (String code : savedCodes) {
+			Source s = Instrument.getSource(code);
+			Instrument i = Instrument.getInstrumentByCode(code);
+			HistoricalData hd = new HistoricalData(i, s);
 
-			// Store prices in DB
-			DatabaseConnector.updateHistoricalData(hd);
-		} else if (!instrument.getCode(Source.AV_CODE).equals("null")) {
-			System.out.println("Fetch data from AV!! for " + instrument.getName());
+			try {
+				// Get penultimate recorded date from DB
+				Date startDate = DatabaseConnector.getLastUpdatedDate(i, s);
+
+				// Get data from relevant source
+				switch (s) {
+				case IG_EPIC:
+					// Obtain new IG prices from that date onward
+					IGConnector.connect(IGCredentials.UK_Credentials);
+					IGConnector.getHistoricalPrices(hd, startDate);
+					break;
+				case AV_CODE:
+					double days = TimeUnit.DAYS.convert(new Date().getTime() - startDate.getTime(), TimeUnit.MILLISECONDS);
+					AlphaVantageConnector.getHistoricalPrices(hd, days > 100);
+					break;
+				default:
+					break;
+				}
+
+				// Store prices in DB
+				DatabaseConnector.updateHistoricalData(hd);
+			} catch (Exception e) {
+				System.err
+						.println("Could not refresh data for code:" + code + ", source:" + s + ", name:" + i.getName());
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void saveHistory(Instrument instrument) {
+		// IG
+		try {
+			if (DatabaseConnector.getLastUpdatedDate(instrument, Source.IG_EPIC) == null) {
+				HistoricalData igHist = new HistoricalData(instrument, Source.IG_EPIC);
+				IGConnector.connect(IGCredentials.UK_Credentials);
+				IGConnector.getHistoricalPrices(igHist, null);
+				DatabaseConnector.updateHistoricalData(igHist);
+			}
+		} catch (Exception e) {
+			System.err.println("Unable to get historical data from IG for " + instrument.getName() + " " + instrument.getCode(Source.IG_EPIC));
+			e.printStackTrace();
+		}
+
+		// AV
+		try {
+			if (DatabaseConnector.getLastUpdatedDate(instrument, Source.AV_CODE) == null) {
+				HistoricalData avHist = new HistoricalData(instrument, Source.AV_CODE);
+				AlphaVantageConnector.getHistoricalPrices(avHist, true);
+				DatabaseConnector.updateHistoricalData(avHist);
+			}
+		} catch (Exception e) {
+			System.err.println("Unable to get historical data from AV for " + instrument.getName() + " "
+					+ instrument.getCode(Source.AV_CODE));
+			e.printStackTrace();
 		}
 	}
 
@@ -200,47 +284,6 @@ public class DataAccessOrchestrator {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		return null;
-	}
-
-	/**
-	 * Loads last x months of data from IG but does not store it in DB.
-	 * 
-	 * @param instrument
-	 */
-	public static HistoricalData getHistoricalData(Instrument instrument, Source s, int nMonths) {
-		HistoricalData hd = new HistoricalData(instrument, s);
-
-		// 3 months ago
-		Calendar calendar = Calendar.getInstance();
-		calendar.add(Calendar.MONTH, -nMonths);
-		Date startDate = calendar.getTime();
-
-		try {
-			IGConnector.connect(IGCredentials.UK_Credentials);
-			Date lastDate = DatabaseConnector.getLastUpdatedDate(instrument, s);
-			if (lastDate != null) {
-				return getHistoricalData(instrument, s, true);
-			}
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
-		if (instrument.isIGDataAvailable()) {
-			try {
-				// Obtain new IG prices from that date onward
-				IGConnector.getHistoricalPrices(hd, startDate);
-				hd.initialiseData();
-				return hd;
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
-		} else if (!instrument.getCode(Source.AV_CODE).equals("null")) {
-			System.out.println("LOADING AV DATA for " + instrument.getName());
-		}
-
 		return null;
 	}
 

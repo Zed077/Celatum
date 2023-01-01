@@ -132,7 +132,7 @@ public class IGConnector {
 	}
 
 	public static void getHistoricalPrices(HistoricalData hd, Date startDate) throws Exception {
-		System.out.print("\ngetHistoricalPrices " + hd.instrument.getName() + ", " + startDate + " ");
+		System.out.print("\nIG getHistoricalPrices " + hd.instrument.getName() + ", " + startDate + " ");
 
 		// Establish start date
 		String startDateTime;
@@ -148,7 +148,7 @@ public class IGConnector {
 		// Fetch Data
 		URL url = new URL("https://api.ig.com/gateway/deal/prices/" + hd.instrument.getCode(Source.IG_EPIC)
 				+ "?resolution=DAY&pageSize=0&from=" + startDateTime + "&to=" + endDateTime);
-		HttpURLConnection conn = createGetConnection(url, "3");
+		HttpURLConnection conn = createConnection(url, "3");
 
 		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
 
@@ -226,7 +226,7 @@ public class IGConnector {
 
 		String epic = id.getCode(Source.IG_EPIC);
 		URL url = new URL("https://api.ig.com/gateway/deal/markets/" + epic);
-		HttpURLConnection conn = createGetConnection(url, "3");
+		HttpURLConnection conn = createConnection(url, "3");
 		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
 
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
@@ -339,7 +339,7 @@ public class IGConnector {
 //		System.out.println("\ngetWatchlist");
 
 		URL url = new URL("https://api.ig.com/gateway/deal/watchlists/" + watchlistId);
-		HttpURLConnection conn = createGetConnection(url, "1");
+		HttpURLConnection conn = createConnection(url, "1");
 
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
 			StringBuilder response = new StringBuilder();
@@ -378,7 +378,7 @@ public class IGConnector {
 //		System.out.println("\ngetWatchlist");
 
 		URL url = new URL("https://api.ig.com/gateway/deal/watchlists/");
-		HttpURLConnection conn = createGetConnection(url, "1");
+		HttpURLConnection conn = createConnection(url, "1");
 
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
 			StringBuilder response = new StringBuilder();
@@ -412,7 +412,7 @@ public class IGConnector {
 		}
 	}
 
-	private static HttpURLConnection createGetConnection(URL url, String version)
+	private static HttpURLConnection createConnection(URL url, String version)
 			throws IOException, ProtocolException {
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");

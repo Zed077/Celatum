@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletResponse;
 import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
-import com.celatum.data.Instrument.Source;
 import com.celatum.data.InstrumentStats;
 import com.celatum.service.json.AlgoRun;
 import com.celatum.service.json.AlgoRunPosition;
@@ -117,7 +116,7 @@ public class TestServlet extends HttpServlet {
 		DataAccessOrchestrator.refreshInstrumentStatistics();
 		try {
 			Collection<Instrument> instruments = DataAccessOrchestrator.getInstruments().values();
-			Collection<InstrumentStats> stats = DataAccessOrchestrator.getInstrumentStatistics(instruments, Source.IG_EPIC);
+			Collection<InstrumentStats> stats = DataAccessOrchestrator.getInstrumentStatistics(instruments);
 
 			String result = new ObjectMapper().writeValueAsString(stats);
 
