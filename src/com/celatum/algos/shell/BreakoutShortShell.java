@@ -82,7 +82,7 @@ public class BreakoutShortShell extends Algo {
 		}
 
 		// Exit if we have already identified this line
-		if (selectL.equals(previousL))
+		if (selectL.deepEquals(previousL))
 			return;
 
 		// Ensure today is not new low

@@ -55,6 +55,9 @@ public class BouncePeriodLowShell extends Algo {
 		SerieItem lowest = zz.lowestSince(hd.midLow.getDate(period));
 		
 		// Place order
+		if (lowest == null) {
+			System.out.println();
+		}
 		double entry = lowest.getValue() + 0.2 * atr.get(0);
 		LongOrder order = new LongOrder(hd.instrument, getGroup(), hd.getReferenceDate(), entry);
 		order.setStop(lowest.getValue() - 0.2 * atr.get(0));

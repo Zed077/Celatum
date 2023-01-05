@@ -18,6 +18,8 @@ import com.celatum.algos.ImprovedReferenceAlgo;
 import com.celatum.algos.LongRegressionAlgo;
 import com.celatum.algos.SuperTrendAlgoNPO;
 import com.celatum.algos.shell.BouncePeriodLowShell;
+import com.celatum.algos.shell.HLHHShell;
+import com.celatum.algos.shell.HammerShell2023;
 import com.celatum.algos.shell.LowerLowShortShell3;
 import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
@@ -28,14 +30,50 @@ import com.celatum.trading.Position;
 import com.celatum.view.Chart;
 
 public class Main {
-	public static final int NTHREAD = 32;
+	public static final int NTHREAD = 20;
+	
+
+	private static void saveNewInstruments() {
+		// Need to be refreshed again since bid / spread info is incorrect
+//		DataAccessOrchestrator.refreshInstrumentStatistics();
+		
+		// Need to be deleted and loaded again to reflect bid / spread
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("RYAAY"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("CA.PAR"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("TAP"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("AAPL"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("AMZN"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("INTC"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("MSFT"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("NFLX"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("NVDA"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("SBUX"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("TLRY"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("TSLA"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("JPM"));
+		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("DAX"));
+		
+		// Need instrument stats to be loaded for these instruments
+//		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("UBER"));
+//		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("DKS"));
+//		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("SPY"));
+//		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("RYRRX"));
+//		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("VCNIX"));
+//		DataAccessOrchestrator.saveHistory(Instrument.getInstrumentByCode("RYDAX"));
+	}
 
 	public static void main(String args[]) throws Exception {
+		DataAccessOrchestrator.init();
+		
+		// Refresh data
+		// TODO: re-run on Monday 09/01/23
+//		saveNewInstruments();
+		
 		// Run
 		try {
 			backTest();
 //			liveRun();
-//			runBestAlgos(false, false);
+//			runBestAlgos(DataAccessOrchestrator.getStockWatchlist(), Source.AV_CODE);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -132,49 +170,23 @@ public class Main {
 	}
 
 	private static void backTest() throws Exception {
-		List<Instrument> instruments = DataAccessOrchestrator.getTestWatchlist();
+		List<Instrument> instruments = DataAccessOrchestrator.getStockWatchlist();
+		Source s = Source.AV_CODE;
+		
 		// BESTs
-//		runAlgoAggregate(new ImprovedReferenceAlgo(), false, false);
-//		runAlgoAggregate(new HLHHAlgo(), false, false);
-		
-		
-//		runAlgoSeparate(new LongKeltnerAlgo(1.4), false, false);
-//		runAlgoSeparate(new LongATRCrossAlgo(), false, false);
-
-//		runAlgoAggregate(new ReferenceAlgo(), false, false);
-//		runAlgoAggregate(new LongRegressionAlgo(), false, false);
-//		runAlgoAggregate(new ImprovedReferenceAlgo(), true, false);
-
-//		runAlgoAggregate(new BreakoutAlgoExit(), false, false);
-		
-
-//		runAlgoAggregate(new BreakoutAlgo(), false, false);
-//		runAlgoAggregate(new SP500Algo(), false, true);
-		runAlgoAggregate(new LowerLowShortShell3(), instruments, true);
-//		runAlgoSeparate(new LowerLowShortShell3(), false, true);
-//		runAlgoSeparate(new BreakoutShortShell(), false, false);
-//
-//		runAlgoAggregate(new HammerShell(), false, true);
-//		runAlgoAggregate(new BasicShortShell(), false, true);
-//		runAlgoSeparate(new BreakoutAlgoG(), false, false);
-//		runAlgoSeparate(new BreakoutLongShell(), false, false);
-		
-//		runAlgoSeparate(new RaynerTeosAlgo(), false, true);
-
-//		evolveAlgo(new LowerLowShortShell3());
+		evolveAlgo(new HLHHShell(), instruments, s);
+//		runAlgoAggregate(new HammerShell2023(), instruments, s);
 	}
 
 	/**
-	 * Provides signals given capital constraints.
-	 * TODO: start one year before current date
+	 * Provides signals given capital constraints. TODO: start one year before
+	 * current date
 	 * 
 	 * @param IGLoad
 	 * @param view
 	 * @throws Exception
 	 */
-	private static void runBestAlgos(boolean view) throws Exception {
-		List<Instrument> instruments = DataAccessOrchestrator.getLiveWatchlist();
-		
+	private static void runBestAlgos(List<Instrument> instruments, Source s) throws Exception {
 		// Algos
 		List<Algo> algos = new ArrayList<Algo>();
 		algos.add(new BullishHammerAlgo());
@@ -188,7 +200,7 @@ public class Main {
 		// Histories
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
 		for (Instrument id : instruments) {
-			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, Source.IG_EPIC);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, s);
 			histories.add(hd);
 		}
 
@@ -200,17 +212,27 @@ public class Main {
 		// Get stats
 		bor.cleanStats();
 		bor.printStats(new Date());
+		
+		// Save run in DB
+		DataAccessOrchestrator.saveAlgoRun(bor, algos, "runBestAlgos", s);
 
 		// View
 //		if (view)
 //			Chart.createAndShowGUI(histories, algo, bor, true);
 	}
 
-	private static void runAlgoAggregate(Algo algo, List<Instrument> instruments, boolean view) throws Exception {
+	/**
+	 * Runs one algo over a number of instrument using a single book of record
+	 * @param algo
+	 * @param instruments
+	 * @param view
+	 * @throws Exception
+	 */
+	private static void runAlgoAggregate(Algo algo, List<Instrument> instruments, Source s) throws Exception {
 		// Make sure we have all the history we need
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
 		for (Instrument id : instruments) {
-			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, Source.IG_EPIC);
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, s);
 			histories.add(hd);
 		}
 
@@ -225,14 +247,19 @@ public class Main {
 		bor.printStats(new Date());
 
 		// View
-		if (view) {
-			List<Algo> algos = new ArrayList<>();
-			algos.add(algo);
-			DataAccessOrchestrator.saveAlgoRun(bor, algos, "runAlgoAggregate");
+		List<Algo> algos = new ArrayList<>();
+		algos.add(algo);
+		DataAccessOrchestrator.saveAlgoRun(bor, algos, algo.getName(), s);
 //			Chart.createAndShowGUI(histories, algo, bor, true);
-		}
 	}
 
+	/**
+	 * Runs one algo on each instrument independently
+	 * @param algo
+	 * @param instruments
+	 * @param view
+	 * @throws Exception
+	 */
 	private static void runAlgoSeparate(Algo algo, List<Instrument> instruments, boolean view) throws Exception {
 		ArrayList<BookOfRecord> bors = new ArrayList<BookOfRecord>();
 		ArrayList<Algo> as = new ArrayList<Algo>();
@@ -263,8 +290,8 @@ public class Main {
 		}
 	}
 
-	private static void evolveAlgo(Algo algo, List<Instrument> instruments) throws InterruptedException {
-		GeneticEvolution g = new GeneticEvolution(instruments, Source.IG_EPIC);
+	private static void evolveAlgo(Algo algo, List<Instrument> instruments, Source s) throws InterruptedException {
+		GeneticEvolution g = new GeneticEvolution(instruments, s);
 		g.run(algo);
 	}
 }

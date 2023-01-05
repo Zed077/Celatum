@@ -29,8 +29,7 @@ public class SerieItem implements Comparable<SerieItem> {
 		return date.toString() + " " + value;
 	}
 	
-	@Override
-	public boolean equals(Object obj) {
+	public boolean deepEquals(Object obj) {
 		SerieItem comp = (SerieItem) obj;
 		return comp.date.equals(this.date) && comp.value == this.value;
 	}

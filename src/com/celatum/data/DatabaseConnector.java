@@ -27,17 +27,27 @@ public class DatabaseConnector {
 	private static final SimpleDateFormat PGDATEFORMAT = new SimpleDateFormat("yyyy-MM-dd", Locale.UK);
 	private static final SimpleDateFormat PGTIMESTAMPFORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.UK);
 	private static final NumberFormat NF = NumberFormat.getInstance();
+	private static Connection connection;
 	
 	static {
 		NF.setMaximumFractionDigits(1);
+		
+		try {
+			Class.forName("org.postgresql.Driver");
+			connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
+					"Abacus2020");
+		} catch (Exception e) {
+			System.err.println("Cannot connect to the database");
+			e.printStackTrace();
+			System.exit(-2);
+		}
 	}
 
 	public static Date getLastUpdatedDate(Instrument inst, Source s) throws Exception {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
 
-		ResultSet resultSet = statement.executeQuery(
-				"SELECT day FROM historicaldata WHERE epic='" + inst.getCode(s) + "' ORDER BY day DESC LIMIT 2");
+		ResultSet resultSet = statement.executeQuery("SELECT day FROM historicaldata WHERE code='" + inst.getCode(s)
+				+ "' AND source='" + s + "'ORDER BY day DESC LIMIT 2");
 
 		int i = 0;
 		Date maxDate = null;
@@ -45,7 +55,7 @@ public class DatabaseConnector {
 			maxDate = resultSet.getDate("day");
 			i++;
 		}
-		System.out.println("getLastUpdatedDate " + maxDate);
+		System.out.println("getLastUpdatedDate " + s.name() + " " + inst.getName() + ": " + maxDate);
 
 		if (i == 2) {
 			return maxDate;
@@ -62,12 +72,10 @@ public class DatabaseConnector {
 	 * @throws ParseException
 	 */
 	public static void getHistoricalData(HistoricalData hd) throws Exception {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
 
-		String code = hd.getCode();
-		ResultSet resultSet = statement.executeQuery(
-				"SELECT * FROM historicaldata WHERE epic='" + code + "' ORDER BY day ASC");
+		ResultSet resultSet = statement.executeQuery("SELECT * FROM historicaldata WHERE code='" + hd.getCode()
+				+ "' AND source='" + hd.getSource() + "'ORDER BY day ASC");
 
 		while (resultSet.next()) {
 			Date day = resultSet.getDate("day");
@@ -185,9 +193,14 @@ public class DatabaseConnector {
 	}
 	
 	public static void saveInstrumentStatistics(InstrumentStats stats) throws ClassNotFoundException, SQLException {
-		Connection connection = getConnection();
+		// Delete existing field if it exists
 		Statement statement = connection.createStatement();
-		String query = "INSERT INTO public.instrumentstatistics VALUES ('"
+		String query = "DELETE FROM public.instrumentstatistics WHERE instrument_code='"
+				+ stats.getInstrumentCode() + "')";
+		statement.executeUpdate(query);
+		
+		// Save new values
+		query = "INSERT INTO public.instrumentstatistics VALUES ('"
 				+ stats.getInstrumentCode() + "', '"
 				+ stats.getMinContractsATR() + "', '" 
 				+ stats.getMaxContractsATR() + "', '"
@@ -198,7 +211,6 @@ public class DatabaseConnector {
 		statement.executeUpdate(query);
 		
 		Date now = new Date();
-		statement = connection.createStatement();
 		query = "UPDATE public.instruments SET stats_last_updated='" + PGDATEFORMAT.format(now)
 				+ "'::date WHERE name='" + stats.getInstrumentName() + "'";
 //		System.out.println(query);
@@ -208,7 +220,6 @@ public class DatabaseConnector {
 	}
 	
 	public static InstrumentStats getInstrumentStatistics(Instrument inst, Source s) throws SQLException, ClassNotFoundException {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
 		String code = inst.getCode(s);
 		String query = "SELECT * FROM public.instrumentstatistics WHERE instrument_code='" + code + "'";
@@ -230,8 +241,7 @@ public class DatabaseConnector {
 	}
 
 	public static void saveAlgoRun(String algoRunRef, Date runDate, String type, String algoDescription,
-			String algoStatistics) throws SQLException, ClassNotFoundException {
-		Connection connection = getConnection();
+			String algoStatistics, Source s) throws SQLException, ClassNotFoundException {
 		// Try updating first
 		algoDescription = algoDescription.replaceAll("'", "''");
 		algoStatistics = algoStatistics.replaceAll("'", "''");
@@ -240,9 +250,10 @@ public class DatabaseConnector {
 		String query = "INSERT INTO public.algorun VALUES ('"
 				+ algoRunRef + "', '"
 				+ PGTIMESTAMPFORMAT.format(runDate) + "'::timestamp, '" 
-				+ type + "', '" 
+				+ type + "', '"
 				+ algoDescription + "', '"
-				+ algoStatistics + "')";
+				+ algoStatistics + "', '"
+				+ s + "')";
 //		System.out.println(query);
 		statement.execute(query);
 	}
@@ -253,22 +264,22 @@ public class DatabaseConnector {
 	 * @throws SQLException
 	 * @throws ClassNotFoundException
 	 */
-	public static Collection<String> getSavedCodes() throws SQLException, ClassNotFoundException {
-		Connection connection = getConnection();
+	public static Collection<HistoricalData> getSavedCodes() throws SQLException, ClassNotFoundException {
 		Statement statement = connection.createStatement();
 
-		ResultSet resultSet = statement.executeQuery("SELECT DISTINCT epic FROM public.historicaldata");
+		ResultSet resultSet = statement.executeQuery("SELECT DISTINCT code, source FROM public.historicaldata");
 
-		ArrayList<String> res = new ArrayList<>();
+		ArrayList<HistoricalData> res = new ArrayList<>();
 		while (resultSet.next()) {			
-			String code = resultSet.getString("epic");
-			res.add(code);
+			String code = resultSet.getString("code");
+			Source s = Source.valueOf(resultSet.getString("source"));
+			HistoricalData hd = new HistoricalData(Instrument.getInstrumentByCode(code), s);
+			res.add(hd);
 		}
 		return res;
 	}
 	
 	public static Collection<AlgoRun> getAlgoRuns() throws SQLException, ClassNotFoundException {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
 
 		ResultSet resultSet = statement.executeQuery("SELECT * FROM public.algorun ORDER BY run_date DESC");
@@ -288,9 +299,9 @@ public class DatabaseConnector {
 	}
 	
 	public static Source getAlgoRunSource(String algoRunRef) throws ClassNotFoundException, SQLException {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
-		ResultSet resultSet = statement.executeQuery("SELECT source FROM public.algorun WHERE algo_run_ref=" + algoRunRef);
+		ResultSet resultSet = statement
+				.executeQuery("SELECT source FROM public.algorun WHERE algo_run_ref='" + algoRunRef + "'");
 
 		String source = null;
 		while (resultSet.next()) {			
@@ -298,19 +309,11 @@ public class DatabaseConnector {
 		}
 		return Source.valueOf(source);
 	}
-
-	private static Connection getConnection() throws ClassNotFoundException, SQLException {
-		Class.forName("org.postgresql.Driver");
-		Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
-				"Abacus2020");
-		return connection;
-	}
 	
 	public static Collection<Instrument> getAlgoRunInstruments(String algoRunRef) throws ClassNotFoundException, SQLException {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
-
-		ResultSet resultSet = statement.executeQuery("SELECT DISTINCT instrument_name FROM public.algorunpositions WHERE algo_run_ref='"+algoRunRef+"'");
+		ResultSet resultSet = statement.executeQuery(
+				"SELECT DISTINCT instrument_name FROM public.algorunpositions WHERE algo_run_ref='" + algoRunRef + "'");
 
 		ArrayList<Instrument> res = new ArrayList<>();
 		while (resultSet.next()) {
@@ -322,10 +325,9 @@ public class DatabaseConnector {
 	}
 	
 	public static Serie getAlgoRunPnL(String algoRunRef) throws ClassNotFoundException, SQLException {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
-
-		ResultSet resultSet = statement.executeQuery("SELECT * FROM public.algorunpnl WHERE algo_run_ref='"+algoRunRef+"'");
+		ResultSet resultSet = statement
+				.executeQuery("SELECT * FROM public.algorunpnl WHERE algo_run_ref='" + algoRunRef + "'");
 
 		Serie res = new Serie();
 		while (resultSet.next()) {
@@ -337,7 +339,6 @@ public class DatabaseConnector {
 	}
 	
 	public static Collection<AlgoRunPosition> getAlgoRunPositions(String algoRunRef, String instrumentName) throws ClassNotFoundException, SQLException {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
 
 		ResultSet resultSet = statement.executeQuery("SELECT * FROM public.algorunpositions WHERE algo_run_ref='"
@@ -359,35 +360,48 @@ public class DatabaseConnector {
 	}
 
 	public static void saveAlgoRunPositions(String algoRunRef, List<Position> positions) throws SQLException {
-		Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
-				"Abacus2020");
+		Statement statement = connection.createStatement();
 		for (Position p : positions) {
 			// Instrument Name
 			String instrumentName = p.getInstrument().getName();
-			// Desc
+			
+			// Entry Desc
+			String limit = (p.getLimit() == Double.MAX_VALUE) ? "Infinity" : NF.format(p.getLimit());
 			String entryDesc = (p.getClass().getSimpleName().equals("LongPosition")) ? "Long " : "Short ";
-			entryDesc += p.getSize() + "@" + NF.format(p.getEntryPrice()) 
-			//+ " " + p.getGroup() 
-			+ " stop="
-					+ NF.format(p.getStop()) + " limit=" + NF.format(p.getLimit());
-			String closeDesc = (p.getClass().getSimpleName().equals("LongPosition")) ? "-" : "+";
-			closeDesc += p.getSize() + "@" + NF.format(p.getClosePrice()) 
-			//+ " " + p.getGroup() 
-			+ " PnL="
-					+ NF.format(p.absolutePnL() - p.getCosts());
+			entryDesc += p.getSize() + "@" + NF.format(p.getEntryPrice())
+			// + " " + p.getGroup()
+					+ " stop=" + NF.format(p.getStop()) + " limit=" + limit;
 
-		Statement statement = connection.createStatement();
-		String query = "INSERT INTO public.algorunpositions VALUES ('"
-				+ algoRunRef + "', '"
-				+ PGDATEFORMAT.format(p.getEntryDate()) + "'::date, '" 
-				+ p.getEntryPrice() + "', '" 
-				+ PGDATEFORMAT.format(p.getCloseDate()) + "'::date, '"
-				+ p.getClosePrice() + "', '"
-				+ instrumentName + "', '"
-				+ entryDesc + "', '"
-				+ closeDesc + "')";
-//				System.out.println(query);
-		statement.execute(query);
+			// Exit Desc
+			String closeDesc = (p.getClass().getSimpleName().equals("LongPosition")) ? "-" : "+";
+			closeDesc += p.getSize() + "@" + NF.format(p.getClosePrice())
+			// + " " + p.getGroup()
+					+ " PnL=" + NF.format(p.absolutePnL() - p.getCosts());
+			
+			
+			if (p.isClosed()) {
+				String query = "INSERT INTO public.algorunpositions VALUES ('"
+						+ algoRunRef + "', '"
+						+ PGDATEFORMAT.format(p.getEntryDate()) + "'::date, '" 
+						+ p.getEntryPrice() + "', '" 
+						+ PGDATEFORMAT.format(p.getCloseDate()) + "'::date, '"
+						+ p.getClosePrice() + "', '"
+						+ instrumentName + "', '"
+						+ entryDesc + "', '"
+						+ closeDesc + "')";
+//						System.out.println(query);
+				statement.execute(query);
+			} else {
+				String query = "INSERT INTO public.algorunpositions (algo_run_ref, entry_date, entry_price, instrument_name, entry_desc, close_desc) VALUES ('"
+						+ algoRunRef + "', '"
+						+ PGDATEFORMAT.format(p.getEntryDate()) + "'::date, '" 
+						+ p.getEntryPrice() + "', '"
+						+ instrumentName + "', '"
+						+ entryDesc + "', '"
+						+ closeDesc + "')";
+//						System.out.println(query);
+				statement.execute(query);
+			}
 		}
 	}
 	
@@ -404,7 +418,6 @@ public class DatabaseConnector {
 	}
 
 	public static void loadInstruments() throws Exception {
-		Connection connection = getConnection();
 		Statement statement = connection.createStatement();
 
 		ResultSet resultSet = statement.executeQuery("SELECT * FROM public.instruments");
@@ -438,44 +451,33 @@ public class DatabaseConnector {
 	}
 
 	public static void updateHistoricalData(HistoricalData hd) throws SQLException {
-		try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
-				"Abacus2020")) {
+		Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
+				"Abacus2020");
 
-			String code = hd.getCode();
+		String code = hd.getCode();
+		Statement statement = connection.createStatement();
+
+		// Delete required records
+		Date lastDate = hd.askClose.oldestDate();
+		statement.executeUpdate("DELETE FROM historicaldata WHERE code='" + code + "' AND day >= '"
+				+ PGDATEFORMAT.format(lastDate) + "'::date");
+		System.out.println("DELETE FROM historicaldata WHERE code='" + code + "' AND day >= '"
+				+ PGDATEFORMAT.format(lastDate) + "'::date");
+
+		// Insert new records
+		for (int i = 0; i < hd.size(); i++) {
+			String sql = "INSERT INTO historicaldata (code, day, askhigh, asklow, askopen, askclose, bidhigh, bidlow, bidopen, bidclose, volume, source) VALUES ('"
+					+ code + "', '" + PGDATEFORMAT.format(hd.askClose.getDate(i)) + "'::date, "
+					+ hd.askHigh.get(i) + ", " + hd.askLow.get(i) + ", " + hd.askOpen.get(i) + ", "
+					+ hd.askClose.get(i) + ", " + hd.bidHigh.get(i) + ", " + hd.bidLow.get(i) + ", "
+					+ hd.bidOpen.get(i) + ", " + hd.bidClose.get(i) + ", " + hd.volume.get(i) + ", '" + hd.getSource( ) +"')";
 			
-			// Delete required records
-			Date lastDate = hd.askClose.oldestDate();
-			Statement del = connection.createStatement();
-			del.executeUpdate("DELETE FROM historicaldata WHERE epic='" + code + "' AND day >= '"
-					+ PGDATEFORMAT.format(lastDate) + "'::date");
-			System.out.println("DELETE FROM historicaldata WHERE epic='" + code + "' AND day >= '"
-					+ PGDATEFORMAT.format(lastDate) + "'::date");
-
-			// Insert new records
-			for (int i = 0; i < hd.size(); i++) {
-				Statement insert = connection.createStatement();
-				try {
-					insert.executeUpdate(
-							"INSERT INTO historicaldata (epic, day, askhigh, asklow, askopen, askclose, bidhigh, bidlow, bidopen, bidclose, volume) VALUES ('"
-									+ code + "', '" + PGDATEFORMAT.format(hd.askClose.getDate(i))
-									+ "'::date, " + hd.askHigh.get(i) + ", " + hd.askLow.get(i) + ", "
-									+ hd.askOpen.get(i) + ", " + hd.askClose.get(i) + ", " + hd.bidHigh.get(i) + ", "
-									+ hd.bidLow.get(i) + ", " + hd.bidOpen.get(i) + ", " + hd.bidClose.get(i) + ", "
-									+ hd.volume.get(i) + ")");
-				} catch (PSQLException pex) {
-					System.out.println(pex.getMessage());
-					System.out.println(
-							"INSERT INTO historicaldata (epic, day, askhigh, asklow, askopen, askclose, bidhigh, bidlow, bidopen, bidclose, volume) VALUES ('"
-									+ code + "', '" + PGDATEFORMAT.format(hd.askClose.getDate(i))
-									+ "'::date, " + hd.askHigh.get(i) + ", " + hd.askLow.get(i) + ", "
-									+ hd.askOpen.get(i) + ", " + hd.askClose.get(i) + ", " + hd.bidHigh.get(i) + ", "
-									+ hd.bidLow.get(i) + ", " + hd.bidOpen.get(i) + ", " + hd.bidClose.get(i) + ", "
-									+ hd.volume.get(i) + ")");
-				}
+			try {
+				statement.executeUpdate(sql);
+			} catch (PSQLException pex) {
+				System.err.println(pex.getMessage());
+				System.err.println(sql);
 			}
-
-		} catch (SQLException e) {
-			throw e;
 		}
 	}
 

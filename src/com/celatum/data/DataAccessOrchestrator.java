@@ -17,18 +17,24 @@ import com.celatum.service.json.AlgoRunPosition;
 
 public class DataAccessOrchestrator {
 
-	private static final String LIVEWATCHLIST = "live";
-	private static final String TESTWATCHLIST = "test";
-	private static final int INSTRUMENT_UPDATE_TIME = 7; // in days
+	public static final String LIVE_WATCHLIST = "live";
+	public static final String TEST_WATCHLIST = "test";
+	public static final String STOCK_WATCHLIST = "stocks";
+	private static final int INSTRUMENT_UPDATE_TIME = 14; // in days
+	private static final int INSTRUMENT_LOOKBACK_TIME = 35; // in days
 	private static TreeMap<String, List<Instrument>> watchlists;
 	private static int counter = 0;
 
 	public static List<Instrument> getLiveWatchlist() {
-		return getWatchlist(LIVEWATCHLIST);
+		return getWatchlist(LIVE_WATCHLIST);
 	}
 
 	public static List<Instrument> getTestWatchlist() {
-		return getWatchlist(TESTWATCHLIST);
+		return getWatchlist(TEST_WATCHLIST);
+	}
+
+	public static List<Instrument> getStockWatchlist() {
+		return getWatchlist(STOCK_WATCHLIST);
 	}
 
 	static {
@@ -42,7 +48,6 @@ public class DataAccessOrchestrator {
 		// Watchlists
 		if (watchlists == null) {
 			try {
-				IGConnector.disconnect();
 				IGConnector.connect(IGCredentials.CH_Credentials);
 
 				// Get all watchlists
@@ -62,7 +67,6 @@ public class DataAccessOrchestrator {
 						IGConnector.augmentInstrument(i);
 					}
 				}
-				IGConnector.disconnect();
 
 				DatabaseConnector.saveInstruments(Instrument.getInstrumentCache().values());
 			} catch (Exception e) {
@@ -72,6 +76,8 @@ public class DataAccessOrchestrator {
 			}
 		}
 	}
+	
+	public static void init() {}
 
 	public static List<Instrument> getWatchlist(String watchlistName) {
 		return watchlists.get(watchlistName);
@@ -96,7 +102,7 @@ public class DataAccessOrchestrator {
 			// Only update every week
 			Date instDate = inst.getLastUpdated();
 			if (instDate == null) {
-				instDate = new Date();
+				instDate = new Date(0);
 			}
 			gc.setTime(instDate);
 			gc.add(GregorianCalendar.DAY_OF_MONTH, INSTRUMENT_UPDATE_TIME);
@@ -117,7 +123,7 @@ public class DataAccessOrchestrator {
 					} else if (inst.isIGDataAvailable()) {
 						// Take date over a period of 3 months
 						Calendar calendar = Calendar.getInstance();
-						calendar.add(Calendar.MONTH, -3);
+						calendar.add(Calendar.DAY_OF_MONTH, -INSTRUMENT_LOOKBACK_TIME);
 						Date startDate = calendar.getTime();
 
 						hd = new HistoricalData(inst, Source.IG_EPIC);
@@ -153,7 +159,7 @@ public class DataAccessOrchestrator {
 		ArrayList<InstrumentStats> res = new ArrayList<>();
 		try {
 			for (Instrument i : insts) {
-				InstrumentStats is = DatabaseConnector.getInstrumentStatistics(i, Source.IG_CHART_CODE);
+				InstrumentStats is = DatabaseConnector.getInstrumentStatistics(i, Source.IG_EPIC);
 				res.add(is);
 			}
 		} catch (Exception e) {
@@ -170,7 +176,7 @@ public class DataAccessOrchestrator {
 	 */
 	public static InstrumentStats getInstrumentStatistics(Instrument inst) {
 		try {
-			return DatabaseConnector.getInstrumentStatistics(inst, Source.IG_CHART_CODE);
+			return DatabaseConnector.getInstrumentStatistics(inst, Source.IG_EPIC);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -203,7 +209,7 @@ public class DataAccessOrchestrator {
 
 	public static void refreshSavedHistories() {
 		// Get saved history codes
-		Collection<String> savedCodes = null;
+		Collection<HistoricalData> savedCodes = null;
 		try {
 			savedCodes = DatabaseConnector.getSavedCodes();
 		} catch (Exception e) {
@@ -211,11 +217,9 @@ public class DataAccessOrchestrator {
 			System.exit(-1);
 		}
 
-		for (String code : savedCodes) {
-			Source s = Instrument.getSource(code);
-			Instrument i = Instrument.getInstrumentByCode(code);
-			HistoricalData hd = new HistoricalData(i, s);
-
+		for (HistoricalData hd : savedCodes) {
+			Source s = hd.getSource();
+			Instrument i = hd.instrument;
 			try {
 				// Get penultimate recorded date from DB
 				Date startDate = DatabaseConnector.getLastUpdatedDate(i, s);
@@ -239,7 +243,7 @@ public class DataAccessOrchestrator {
 				DatabaseConnector.updateHistoricalData(hd);
 			} catch (Exception e) {
 				System.err
-						.println("Could not refresh data for code:" + code + ", source:" + s + ", name:" + i.getName());
+						.println("Could not refresh data for code:" + hd.getCode() + ", source:" + s + ", name:" + i.getName());
 				e.printStackTrace();
 			}
 		}
@@ -256,7 +260,7 @@ public class DataAccessOrchestrator {
 			}
 		} catch (Exception e) {
 			System.err.println("Unable to get historical data from IG for " + instrument.getName() + " " + instrument.getCode(Source.IG_EPIC));
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 
 		// AV
@@ -287,7 +291,7 @@ public class DataAccessOrchestrator {
 		return null;
 	}
 
-	public synchronized static void saveAlgoRun(BookOfRecord bor, List<Algo> algos, String type) {
+	public synchronized static void saveAlgoRun(BookOfRecord bor, List<Algo> algos, String type, Source s) {
 		// Create parent entry
 		Date runDate = new Date();
 		String algoRunRef = type + "_" + runDate.getTime() + "_" + counter++;
@@ -301,7 +305,7 @@ public class DataAccessOrchestrator {
 		algoStatistics = algoStatistics.replaceAll("[\r\n]+", "<br>");
 		
 		try {
-			DatabaseConnector.saveAlgoRun(algoRunRef, runDate, type, algoDescription, algoStatistics);
+			DatabaseConnector.saveAlgoRun(algoRunRef, runDate, type, algoDescription, algoStatistics, s);
 			DatabaseConnector.saveAlgoRunPositions(algoRunRef, bor.getAllPositions(runDate));
 			DatabaseConnector.saveAlgoRunPnL(algoRunRef, bor.profitAndLoss);
 		} catch (Exception e) {

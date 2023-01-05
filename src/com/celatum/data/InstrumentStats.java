@@ -47,7 +47,7 @@ public class InstrumentStats {
 		instrumentName = hd.instrument.getName();
 		instrumentCode = hd.getCode();
 		
-		bidAskSpreadPercent = hd.askClose.get(0) - hd.bidClose.get(0) / hd.midClose.get(0);
+		bidAskSpreadPercent = (hd.askClose.get(0) - hd.bidClose.get(0)) / hd.midClose.get(0);
 	}
 	
 	/**

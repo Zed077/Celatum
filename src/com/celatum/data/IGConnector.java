@@ -39,10 +39,13 @@ public class IGConnector {
 	 * of 72 hours while they are in use.
 	 * 
 	 * @throws IOException
-	 * @throws InterruptedException 
+	 * @throws InterruptedException
 	 */
 	static void connect(IGCredentials credentials) throws IOException, InterruptedException {
-		currentCredentials = credentials;
+		// Disconnect if the credentials are different
+		if (currentCredentials != null && !credentials.getKey().equals(currentCredentials.getKey())) {
+			disconnect();
+		}
 
 		if (validUntilTime != null && (new Date()).before(validUntilTime))
 			return;
@@ -55,56 +58,62 @@ public class IGConnector {
 		conn.setRequestProperty("Accept", "application/json; charset=UTF-8");
 		conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 		conn.setRequestProperty("VERSION", "2");
-		conn.setRequestProperty("X-IG-API-KEY", currentCredentials.getKey());
+		conn.setRequestProperty("X-IG-API-KEY", credentials.getKey());
 
-		String data = currentCredentials.getCredentialString();
+		String data = credentials.getCredentialString();
 		byte[] out = data.getBytes(StandardCharsets.UTF_8);
 
-		OutputStream stream = conn.getOutputStream();
-		stream.write(out);
+		try {
+			OutputStream stream = conn.getOutputStream();
+			stream.write(out);
 
-		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
-		
-		if (conn.getResponseMessage().equals("Unauthorized")) {
-			if (errorCount < 1) {
-				System.out.print("Retrying in " + TIMEOUT/1000 + "s ");
-				errorCount++;
-				Thread.sleep(TIMEOUT);
-				connect(credentials);
-			} else {
-				System.exit(-1);
-			}
-		}
+			System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
 
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
-			StringBuilder response = new StringBuilder();
-			String responseLine = null;
-			while ((responseLine = br.readLine()) != null) {
-				response.append(responseLine.trim());
+			if (conn.getResponseMessage().equals("Unauthorized")) {
+				if (errorCount < 1) {
+					System.out.print("Retrying in " + TIMEOUT / 1000 + "s ");
+					errorCount++;
+					Thread.sleep(TIMEOUT);
+					connect(credentials);
+				} else {
+					System.exit(-1);
+				}
 			}
 
-			JSONObject jo = new JSONObject(response.toString());
+			try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+				StringBuilder response = new StringBuilder();
+				String responseLine = null;
+				while ((responseLine = br.readLine()) != null) {
+					response.append(responseLine.trim());
+				}
 
-			// CH Account info
-			if (credentials == IGCredentials.CH_Credentials) {
-				JSONObject jaccount = jo.getJSONObject("accountInfo");
-				accountAvailable = jaccount.getDouble("available");
-				accountBalance = jaccount.getDouble("balance");
+				JSONObject jo = new JSONObject(response.toString());
+
+				// CH Account info
+				if (credentials == IGCredentials.CH_Credentials) {
+					JSONObject jaccount = jo.getJSONObject("accountInfo");
+					accountAvailable = jaccount.getDouble("available");
+					accountBalance = jaccount.getDouble("balance");
+				}
 			}
-		}
 
-		CST = conn.getHeaderField("CST");
+			CST = conn.getHeaderField("CST");
 //			System.out.println("CST : " + CST);
-		XSECURITYTOKEN = conn.getHeaderField("X-SECURITY-TOKEN");
+			XSECURITYTOKEN = conn.getHeaderField("X-SECURITY-TOKEN");
 //			System.out.println("X-SECURITY-TOKEN : " + XSECURITYTOKEN);
-		Calendar calendar = Calendar.getInstance();
-		calendar.add(Calendar.MINUTE, 350);
-		validUntilTime = calendar.getTime();
-
-		conn.disconnect();
+			Calendar calendar = Calendar.getInstance();
+			calendar.add(Calendar.MINUTE, 350);
+			validUntilTime = calendar.getTime();
+			currentCredentials = credentials;
+		} catch (Exception e) {
+			currentCredentials = null;
+			throw e;
+		} finally {
+			conn.disconnect();
+		}
 	}
 
-	static void disconnect() {
+	private static void disconnect() {
 		validUntilTime = null;
 		if (currentCredentials == null) {
 			return;
@@ -207,13 +216,27 @@ public class IGConnector {
 				}
 			}
 			errorCount = 0;
-		} catch (Exception e) {
-			if (errorCount <= 1) {
+		} catch (IOException e) {
+			// Get the detail of the HTTP error
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
+			StringBuilder response = new StringBuilder();
+			String responseLine = null;
+			while ((responseLine = br.readLine()) != null) {
+				response.append(responseLine.trim());
+			}
+			JSONObject jo = new JSONObject(response.toString());
+			String errorCode = jo.getString("errorCode");
+			System.out.println(errorCode);
+
+			// Retry if it is worth it
+			if (errorCount < 1 && !errorCode.equals("error.public-api.exceeded-account-historical-data-allowance")) {
 				System.out.println("Connection exception, retrying\n" + e.getMessage());
 				errorCount++;
 				Thread.sleep(TIMEOUT);
 				getHistoricalPrices(hd, startDate);
-			} else {
+			}
+			// Tell calling method we have failed
+			else {
 				throw e;
 			}
 		} finally {
@@ -282,7 +305,7 @@ public class IGConnector {
 			errorCount = 0;
 
 		} catch (Exception e) {
-			if (errorCount <= 1) {
+			if (errorCount < 1) {
 				System.out.println("Connection exception, retrying\n" + e.getMessage());
 				errorCount++;
 				Thread.sleep(TIMEOUT);

@@ -15,8 +15,7 @@ public class Instrument implements Comparable<Instrument> {
 	}
 
 	private static TreeMap<String, Instrument> name_instrumentCache = new TreeMap<>();
-	private static TreeMap<String, Instrument> code_instrumentCache = new TreeMap<>();
-	private static TreeMap<String, Source> code_sourceCache = new TreeMap<>();
+	private static TreeMap<String, Instrument> code_instrumentCache = new TreeMap<>(); // Might not always work i.e. same code on two sources refers to two different instruments
 	private TreeMap<Source, String> codes = new TreeMap<>();
 	private String name;
 	private String expiry;
@@ -36,7 +35,7 @@ public class Instrument implements Comparable<Instrument> {
 	 * @return
 	 */
 	public static Instrument getInstrumentByName(String name) {
-		name = name.replaceAll("'", "").replaceAll("&", "n").replaceAll("€", "E");
+		name = name.replaceAll("'", "").replaceAll("&", "n").replaceAll("\u20ac", "E");
 
 		Instrument result = name_instrumentCache.get(name);
 		if (result == null) {
@@ -53,10 +52,6 @@ public class Instrument implements Comparable<Instrument> {
 	 */
 	public static Instrument getInstrumentByCode(String code) {
 		return code_instrumentCache.get(code);
-	}
-	
-	public static Source getSource(String code) {
-		return code_sourceCache.get(code);
 	}
 
 	static TreeMap<String, Instrument> getInstrumentCache() {
@@ -75,9 +70,8 @@ public class Instrument implements Comparable<Instrument> {
 	public void setCode(Source s, String code) {
 		codes.put(s, code);
 		code_instrumentCache.put(code, this);
-		code_sourceCache.put(code, s);
 	}
-	
+
 	public String getCode(Source s) {
 		return codes.get(s);
 	}

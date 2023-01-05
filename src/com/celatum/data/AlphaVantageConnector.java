@@ -10,8 +10,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.celatum.data.Instrument.Source;
@@ -45,7 +46,7 @@ public class AlphaVantageConnector {
 	 * @throws Exception
 	 */
 	public static void getHistoricalPrices(HistoricalData hd, boolean full) throws Exception {
-		System.out.println("\nAV getHistoricalPrices " + hd.instrument.getName());
+		System.out.print("AV getHistoricalPrices " + hd.instrument.getName() + " ");
 
 		String outputSize = (full) ? "full" : "compact";
 
@@ -64,36 +65,38 @@ public class AlphaVantageConnector {
 			}
 
 			JSONObject jo = new JSONObject(response.toString());
-			JSONArray arr = jo.getJSONArray("Time Series (Daily)");
+			JSONObject arr = jo.getJSONObject("Time Series (Daily)");
+			
+			// Order the entries in descending order
+			NavigableSet<String> keys = new TreeSet<>(arr.keySet()).descendingSet();
 
-			// Loop through timed entries. IMPORTANT: assumes these are in descending order to apply the split coefficient
+			// Loop through timed entries
 			double splitCoefficient = 1;
 			Date lastDay = null;
-			for (int i = 0; i < arr.length(); i++) {
+			for (String timestamp : keys) {
 				// Date
-				String timestamp = arr.getString(i);
 				Date day = AVDATEFORMAT.parse(timestamp);
 				if (lastDay != null && day.after(lastDay)) {
 					throw new RuntimeException("AV time series must be in descending order in order to correctly apply the split coefficient");
 				}
 				
 				// Init
-				JSONObject d = arr.getJSONObject(i);
+				JSONObject d = arr.getJSONObject(timestamp);
 				double spread = DataAccessOrchestrator.getInstrumentStatistics(hd.instrument).getBidAskSpreadPercent()/2.0;
 				
 				// Volume
 				int volume = d.getInt("6. volume");
 
 				// Prices
-				double askOpen = d.getDouble("1. open") * (1 + spread);
-				double askClose = d.getDouble("5. adjusted close") * (1 + spread);
-				double askHigh = d.getDouble("2. high") * (1 + spread);
-				double askLow = d.getDouble("3. low") * (1 + spread);
+				double askOpen = d.getDouble("1. open") * (1 + spread) / splitCoefficient;
+				double askClose = d.getDouble("4. close") * (1 + spread) / splitCoefficient;
+				double askHigh = d.getDouble("2. high") * (1 + spread) / splitCoefficient;
+				double askLow = d.getDouble("3. low") * (1 + spread) / splitCoefficient;
 
-				double bidOpen = d.getDouble("1. open") * (1 - spread);
-				double bidClose = d.getDouble("5. adjusted close") * (1 - spread);
-				double bidHigh = d.getDouble("2. high") * (1 - spread);
-				double bidLow = d.getDouble("3. low") * (1 - spread);
+				double bidOpen = d.getDouble("1. open") * (1 - spread) / splitCoefficient;
+				double bidClose = d.getDouble("4. close") * (1 - spread) / splitCoefficient;
+				double bidHigh = d.getDouble("2. high") * (1 - spread) / splitCoefficient;
+				double bidLow = d.getDouble("3. low") * (1 - spread) / splitCoefficient;
 
 				hd.askOpen.put(day, askOpen);
 				hd.askClose.put(day, askClose);
@@ -103,10 +106,11 @@ public class AlphaVantageConnector {
 				hd.bidClose.put(day, bidClose);
 				hd.bidHigh.put(day, bidHigh);
 				hd.bidLow.put(day, bidLow);
+				// TODO should we not also divide the volume by the split coefficient?
 				hd.volume.put(day, (double) volume);
 
 				// Split coefficient for the next record
-				double newSplit = arr.getJSONObject(i).getDouble("8. split coefficient");
+				double newSplit = d.getDouble("8. split coefficient");
 				splitCoefficient = splitCoefficient * newSplit;
 			}
 		} catch (Exception e) {

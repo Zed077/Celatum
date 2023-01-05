@@ -37,7 +37,11 @@ public class AlgoRunPosition {
 	}
 
 	public String getCloseDate() {
-		return closeDate.toString();
+		if (closeDate == null) {
+			return null;
+		} else {
+			return closeDate.toString();
+		}
 	}
 
 	public double getClosePrice() {

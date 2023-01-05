@@ -50,7 +50,7 @@ public class GeneticEvolution {
 	private Vector<AlgoRunner> population = new Vector<AlgoRunner>();
 	private static final int maxGenerations = 3;
 	private static final int maxPopulationSize = 20;
-	private static final double minPositions = 3.7; //per stock for the entire period
+	private static final double minPositions = 30; // per stock for the entire period
 	private static final int nSurvivors = 5;
 	private NumberFormat percentFormat = NumberFormat.getPercentInstance();
 	private NumberFormat numberFormat = NumberFormat.getNumberInstance();

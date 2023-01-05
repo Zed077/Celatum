@@ -135,6 +135,7 @@ public class HistoricalData implements Cloneable {
 		HistoricalData clone = new HistoricalData();
 
 		clone.instrument = this.instrument;
+		clone.source = this.source;
 
 		clone.askHigh = (Serie) this.askHigh.clone();
 		clone.askLow = (Serie) this.askLow.clone();
@@ -172,5 +173,9 @@ public class HistoricalData implements Cloneable {
 
 	public String getCode() {
 		return this.instrument.getCode(source);
+	}
+
+	public Source getSource() {
+		return source;
 	}
 }

@@ -79,7 +79,7 @@ public class BreakoutAlgo extends Algo {
 		}
 
 		// Exit if we have already identified this line
-		if (selectH.equals(previousH))
+		if (selectH.deepEquals(previousH))
 			return;
 
 		// Ensure today is not new high
@@ -136,7 +136,7 @@ public class BreakoutAlgo extends Algo {
 		}
 
 		// Exit if we have already identified this line
-		if (selectL.equals(previousL))
+		if (selectL.deepEquals(previousL))
 			return;
 
 		// Ensure today is not new low

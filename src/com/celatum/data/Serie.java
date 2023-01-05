@@ -195,14 +195,13 @@ public class Serie implements Cloneable {
 		return res;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
+	public boolean deepEquals(Object obj) {
 		if (obj == null)
 			return false;
 		
 		Serie comp = (Serie) obj;
 		for (int i = 0; i < cache.size(); i++) {
-			if (!comp.cache.get(i).equals(this.cache.get(i)))
+			if (!comp.cache.get(i).deepEquals(this.cache.get(i)))
 				return false;
 		}
 		
