@@ -9,8 +9,8 @@ import com.celatum.data.Serie;
 import com.celatum.maths.Calc;
 
 public class Hammer extends EntryCondition {
-	private Serie percent;
-	private int period = 70;
+	private Serie atrPercent;
+	private int atrPeriod;
 	private boolean bullish = true;
 
 	public Hammer() {
@@ -18,38 +18,47 @@ public class Hammer extends EntryCondition {
 
 	/**
 	 * 
-	 * @param period
+	 * @param atrPeriod
 	 * @param bullish false=bearish, true=bullish
 	 */
-	public Hammer(int period, boolean bullish) {
-		this.period = period;
+	public Hammer(int atrPeriod, boolean bullish) {
+		this.atrPeriod = atrPeriod;
 		this.bullish = bullish;
 	}
 
 	public void setUp(HistoricalData hd) {
-		percent = Calc.atrPercent(hd, period);
-		hd.syncReferenceIndex(percent);
+		atrPercent = Calc.atrPercent(hd, atrPeriod);
+		hd.syncReferenceIndex(atrPercent);
 	}
 
 	public boolean canEnter(HistoricalData hd, BookOfRecord bor) {
 		// Significant breath
-		boolean sb = hd.midHigh.get(0) - hd.midLow.get(0) >= hd.midClose.get(1) * percent.get(0) * 1;
+		boolean breath = hd.midHigh.get(0) - hd.midLow.get(0) >= hd.midClose.get(1) * atrPercent.get(0) * 1;
 
-		// Hammer shape
-		boolean hs = hd.midHigh.get(0) - hd.midLow.get(0) >= Math.abs(hd.midOpen.get(0) - hd.midClose.get(0)) * 4;
+		// Hammer shape: small body
+		boolean body = hd.midHigh.get(0) - hd.midLow.get(0) >= Math.abs(hd.midOpen.get(0) - hd.midClose.get(0)) * 3;
 
-		boolean bh;
+		// Hammer shape: small wick
+		boolean wick;
 		if (bullish) {
 			// Bullish hammer
-			bh = Math.max(hd.midOpen.get(0), hd.midClose.get(0))
-					- hd.midLow.get(0) >= (hd.midHigh.get(0) - hd.midLow.get(0)) * 0.95;
+			wick = hd.midHigh.get(0) - hd.midClose.get(0) <= (hd.midHigh.get(0) - hd.midLow.get(0)) * 0.1;
 		} else {
 			// Bearish hammer
-			bh = hd.midHigh.get(0)
-					- Math.min(hd.midOpen.get(0), hd.midClose.get(0)) >= (hd.midHigh.get(0) - hd.midLow.get(0)) * 0.95;
+			wick = hd.midClose.get(0) - hd.midLow.get(0) <= (hd.midHigh.get(0) - hd.midLow.get(0)) * 0.1;
+		}
+		
+		// Hammer shape: ends better than it started
+		boolean dir;
+		if (bullish) {
+			dir = hd.midOpen.get(0) < hd.midClose.get(0);
+		} else {
+			// Bearish hammer
+			dir = hd.midOpen.get(0) > hd.midClose.get(0);
 		}
 
-		boolean res = sb && hs && bh;
+//		boolean res = breath && body && wick && dir;
+		boolean res = wick && body && dir;
 		if (res) {
 //			algo.plot(hd.midLow.getItem(0));
 		}
@@ -58,11 +67,11 @@ public class Hammer extends EntryCondition {
 
 	@Override
 	public String toString() {
-		return "HAM/" + period + bullish;
+		return "HAM/" + atrPeriod + bullish;
 	}
 
 	public EntryCondition clone() {
-		return new Hammer(period, bullish);
+		return new Hammer(atrPeriod, bullish);
 	}
 
 	@Override
