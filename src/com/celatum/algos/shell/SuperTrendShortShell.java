@@ -28,12 +28,12 @@ import com.celatum.trading.LongOrder;
 import com.celatum.trading.Position;
 import com.celatum.trading.ShortOrder;
 
-public class SuperTrendShell extends Algo {
+public class SuperTrendShortShell extends Algo {
 	private Serie adp;
 	private Serie supertrend;
 	private int adpPeriod = 70;
 
-	public SuperTrendShell() {
+	public SuperTrendShortShell() {
 		addAlgoComponent(new TightenStopWithAge(80));
 		addAlgoComponent(new NoPositionOpen());
 		addAlgoComponent(new ReverseCondition(new SuperTrendIndicator()));
@@ -82,6 +82,6 @@ public class SuperTrendShell extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new SuperTrendShell();
+		return new SuperTrendShortShell();
 	}
 }

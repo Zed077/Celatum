@@ -4,6 +4,7 @@ import com.celatum.BookOfRecord;
 import com.celatum.algos.Algo;
 import com.celatum.algos.entry.Hammer;
 import com.celatum.algos.entry.HigherHighs;
+import com.celatum.algos.entry.HigherHighs.Method;
 import com.celatum.algos.entry.NearPeriodLow;
 import com.celatum.algos.entry.NoPositionOpen;
 import com.celatum.algos.entry.RegressionTrend;
@@ -12,6 +13,7 @@ import com.celatum.algos.exit.DailyTrailingStop;
 import com.celatum.algos.exit.NegativeForTooLong;
 import com.celatum.algos.exit.NotGoneMyWay;
 import com.celatum.algos.exit.RemoveLimit;
+import com.celatum.algos.exit.SignificantFavorableMove;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.data.SerieItem;
@@ -26,15 +28,14 @@ public class BouncePeriodLowShell extends Algo {
 	public BouncePeriodLowShell() {
 		addAlgoComponent(new NoPositionOpen());
 		addAlgoComponent(new NearPeriodLow(period));
-//		addAlgoComponent(new Hammer(period, true));
-		addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.ADP,70, 2.5));
 		
-		// BouncePeriodLowShell-NPO-NPL/70-RT/200-0.3-!HH/ADP705.5--DTS/ADP702.5--RL--NFTL/3--NGMW/30.1 34 -24,315 1,273,147 12.57%
-		addAlgoComponent(new RegressionTrend(200, -0.3));
-		addAlgoComponent(new ReverseCondition(new HigherHighs(HigherHighs.Method.ADP, 70, 5.5)));
-		addAlgoComponent(new RemoveLimit());
-		addAlgoComponent(new NegativeForTooLong(3));
-		addAlgoComponent(new NotGoneMyWay(3, 0.1));
+//		addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.ADP,70, 2.5));
+		
+		// BouncePeriodLowShell-NPO-NPL/70-!HH/SDP2002.5--DTS/ATR201.5--SFM/2003.01.0 349 -2,713 1,338,293 8.6%
+//		addAlgoComponent(new ReverseCondition(new HigherHighs(Method.SDP, 200, 2.5)));
+//		addAlgoComponent(new DailyTrailingStop(com.celatum.algos.exit.DailyTrailingStop.Method.ATR, 20, 1.5));
+//		addAlgoComponent(new SignificantFavorableMove(200, 3, 1));
+		
 	}
 
 	@Override

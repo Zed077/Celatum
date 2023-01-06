@@ -1,8 +1,9 @@
-package com.celatum.algos;
+package com.celatum.algos.shell.y2022;
 
 import java.awt.Color;
 
 import com.celatum.BookOfRecord;
+import com.celatum.algos.Algo;
 import com.celatum.algos.exit.DailyTrailingStop;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;

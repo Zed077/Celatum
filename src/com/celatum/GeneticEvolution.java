@@ -67,7 +67,7 @@ public class GeneticEvolution {
 		}
 	}
 
-	public void run(Algo shell) throws InterruptedException {
+	public Algo run(Algo shell) throws InterruptedException {
 		/**
 		 * All shells must have basic entry and exit mgt
 		 */
@@ -93,7 +93,7 @@ public class GeneticEvolution {
 			}
 		}
 
-		geneticSelection();
+		return geneticSelection();
 	}
 
 	// TODO use an enum instead of a toggle
@@ -235,7 +235,7 @@ public class GeneticEvolution {
 		population.addAll(mutants);
 	}
 
-	private void geneticSelection() {
+	private Algo geneticSelection() {
 		System.out.println("--------------- GENETIC SELECTION");
 
 		// Remove broken algos
@@ -292,6 +292,8 @@ public class GeneticEvolution {
 		population.addAll(survivors);
 
 		printPopulation();
+		
+		return population.get(0).algo;
 	}
 
 	private void createEntryConditionsGen0(Algo shell) {
@@ -327,8 +329,9 @@ public class GeneticEvolution {
 	private void createEntryConditions() {
 		entryConditions.addAll(new EMACompare().generateVariants());
 		entryConditions.addAll(new EMADistance().generateVariants());
-//		entryConditions.addAll(new Hammer().generateVariants());
+//		entryConditions.addAll(new Hammer().generateVariants()); Too restrictive
 		entryConditions.addAll(new HigherHighs().generateVariants());
+//		entryConditions.addAll(new NearPeriodLow().generateVariants()); Has issues
 		entryConditions.addAll(new NoPositionOpen().generateVariants());
 		entryConditions.addAll(new NoViolentMoveDown().generateVariants());
 		entryConditions.addAll(new OutsideBollingerBands().generateVariants());

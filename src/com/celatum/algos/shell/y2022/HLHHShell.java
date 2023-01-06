@@ -1,15 +1,7 @@
-package com.celatum.algos;
+package com.celatum.algos.shell.y2022;
 
 import com.celatum.BookOfRecord;
-import com.celatum.algos.entry.HigherHighs;
-import com.celatum.algos.entry.HigherHighs.Method;
-import com.celatum.algos.entry.RegressionTrend;
-import com.celatum.algos.entry.ReverseCondition;
-import com.celatum.algos.exit.DailyTrailingStop;
-import com.celatum.algos.exit.NegativeForTooLong;
-import com.celatum.algos.exit.RegressedStop;
-import com.celatum.algos.exit.SignificantFavorableMove;
-import com.celatum.algos.exit.TimedExit;
+import com.celatum.algos.Algo;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.data.SerieItem;
@@ -17,20 +9,10 @@ import com.celatum.maths.Calc;
 import com.celatum.maths.ZigZagRelative;
 import com.celatum.trading.LongOrder;
 
-public class HLHHAlgo extends Algo {
+public class HLHHShell extends Algo {
 	private Serie atr;
 	private double minPercent;
 	private double devBreath = 3;
-	
-	public HLHHAlgo() {
-		// HLHHShell2023-HH/SDP2004.5-RT/20-0.3--TE/20--RS/703.5--DTS/ADP704.0--SFM/706.01.0 1047 -39,469 35,507,369 24.89%
-		addAlgoComponent(new TimedExit(20));
-		addAlgoComponent(new HigherHighs(Method.SDP, 200, 4.5));
-		addAlgoComponent(new RegressionTrend(20, -0.3));
-		addAlgoComponent(new RegressedStop(70, 3.5));
-		addAlgoComponent(new DailyTrailingStop(com.celatum.algos.exit.DailyTrailingStop.Method.ADP, 70, 4.0));
-		addAlgoComponent(new SignificantFavorableMove(70, 6, 1));
-	}
 
 	@Override
 	protected void setUp(HistoricalData hd, BookOfRecord bor) {
@@ -94,6 +76,6 @@ public class HLHHAlgo extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new HLHHAlgo();
+		return new HLHHShell();
 	}
 }

@@ -1,8 +1,13 @@
 package com.celatum.algos;
 
-import java.awt.Color;
-
 import com.celatum.BookOfRecord;
+import com.celatum.algos.entry.HigherHighs;
+import com.celatum.algos.entry.HigherHighs.Method;
+import com.celatum.algos.entry.OutsideBollingerBands;
+import com.celatum.algos.exit.NotGoneMyWay;
+import com.celatum.algos.exit.RegressedStop;
+import com.celatum.algos.exit.RegressedTrendStop;
+import com.celatum.algos.exit.RemoveLimit;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.maths.Calc;
@@ -13,7 +18,12 @@ import com.celatum.trading.Position;
 import com.celatum.trading.ShortOrder;
 import com.celatum.trading.StopLongOrder;
 
-public class LongRegressionAlgo extends Algo {
+/**
+ * Need to transform this strategy into entries and exits
+ * @author cedric
+ *
+ */
+public class LongRegressionAlgo2023 extends Algo {
 	private Serie ema50;
 	private Serie ema20;
 	private Serie lowerKC;
@@ -24,17 +34,24 @@ public class LongRegressionAlgo extends Algo {
 	private int period = 200;
 	private LinearRegression lr;
 
-	public LongRegressionAlgo() {
+	public LongRegressionAlgo2023() {
+		// LongRegressionAlgo-HH/ADP204.0-OBB/201.0false--RS/203.5--NGMW/50.5--RL--RTS/2000.05 357 -64,315 6,325,851 15.76%
+		addAlgoComponent(new HigherHighs(Method.ADP, 20, 4));
+		addAlgoComponent(new OutsideBollingerBands(20, 1, false));
+		addAlgoComponent(new RegressedStop(20, 3.5));
+		addAlgoComponent(new NotGoneMyWay(5, 0.5));
+		addAlgoComponent(new RemoveLimit());
+		addAlgoComponent(new RegressedTrendStop(200, 0.05));
 	}
 
-	public LongRegressionAlgo(double keltnerMultiplier, int period) {
+	public LongRegressionAlgo2023(double keltnerMultiplier, int period) {
 		this.keltnerMultiplier = keltnerMultiplier;
 		this.period = period;
 	}
 
 	@Override
 	public Algo getInstance() {
-		return new LongRegressionAlgo(keltnerMultiplier, period);
+		return new LongRegressionAlgo2023(keltnerMultiplier, period);
 	}
 
 	@Override
@@ -54,11 +71,6 @@ public class LongRegressionAlgo extends Algo {
 		hd.syncReferenceIndex(midKC);
 		hd.syncReferenceIndex(upperKC);
 		hd.syncReferenceIndex(atr);
-
-		this.plot(lowerKC, "Lower KC", Color.YELLOW);
-		this.plot(upperKC, "Upper KC", Color.YELLOW);
-		this.plot(midKC, "EMA20 KC", Color.YELLOW, true);
-		this.plot(ema50, "EMA50 KC", Color.ORANGE);
 	}
 
 	@Override

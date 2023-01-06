@@ -141,97 +141,35 @@ public class RegressedStop extends ExitStrategy {
 	public Set<ExitStrategy> generateVariants() {
 		HashSet<ExitStrategy> set = new HashSet<ExitStrategy>();
 //		// ATR
-//		set.add(new RegressedStop(Method.ATR, 20, 0));
-//		set.add(new RegressedStop(Method.ATR, 20, 0.5));
-//		set.add(new RegressedStop(Method.ATR, 20, 1));
-//		set.add(new RegressedStop(Method.ATR, 20, 1.5));
-//		set.add(new RegressedStop(Method.ATR, 20, 2));
-//		set.add(new RegressedStop(Method.ATR, 20, 2.5));
-//		set.add(new RegressedStop(Method.ATR, 20, 3));
-//		set.add(new RegressedStop(Method.ATR, 20, 3.5));
-//		set.add(new RegressedStop(Method.ATR, 20, 4));
-//
-//		set.add(new RegressedStop(Method.ATR, 70, 0));
-//		set.add(new RegressedStop(Method.ATR, 70, 0.5));
-//		set.add(new RegressedStop(Method.ATR, 70, 1));
-//		set.add(new RegressedStop(Method.ATR, 70, 1.5));
-//		set.add(new RegressedStop(Method.ATR, 70, 2));
-//		set.add(new RegressedStop(Method.ATR, 70, 2.5));
-//		set.add(new RegressedStop(Method.ATR, 70, 3));
-//		set.add(new RegressedStop(Method.ATR, 70, 3.5));
-//		set.add(new RegressedStop(Method.ATR, 70, 4));
-//
-//		set.add(new RegressedStop(Method.ATR, 200, 0));
-//		set.add(new RegressedStop(Method.ATR, 200, 0.5));
-//		set.add(new RegressedStop(Method.ATR, 200, 1));
-//		set.add(new RegressedStop(Method.ATR, 200, 1.5));
-//		set.add(new RegressedStop(Method.ATR, 200, 2));
-//		set.add(new RegressedStop(Method.ATR, 200, 2.5));
-//		set.add(new RegressedStop(Method.ATR, 200, 3));
-//		set.add(new RegressedStop(Method.ATR, 200, 3.5));
-//		set.add(new RegressedStop(Method.ATR, 200, 4));
-//
-//		// ADP
-//		set.add(new RegressedStop(Method.ADP, 20, 0));
-//		set.add(new RegressedStop(Method.ADP, 20, 0.5));
-//		set.add(new RegressedStop(Method.ADP, 20, 1));
-//		set.add(new RegressedStop(Method.ADP, 20, 1.5));
-//		set.add(new RegressedStop(Method.ADP, 20, 2));
-//		set.add(new RegressedStop(Method.ADP, 20, 2.5));
-//		set.add(new RegressedStop(Method.ADP, 20, 3));
-//		set.add(new RegressedStop(Method.ADP, 20, 3.5));
-//		set.add(new RegressedStop(Method.ADP, 20, 4));
-//
-//		set.add(new RegressedStop(Method.ADP, 70, 0));
-//		set.add(new RegressedStop(Method.ADP, 70, 0.5));
-//		set.add(new RegressedStop(Method.ADP, 70, 1));
-//		set.add(new RegressedStop(Method.ADP, 70, 1.5));
-//		set.add(new RegressedStop(Method.ADP, 70, 2));
-//		set.add(new RegressedStop(Method.ADP, 70, 2.5));
-//		set.add(new RegressedStop(Method.ADP, 70, 3));
-//		set.add(new RegressedStop(Method.ADP, 70, 3.5));
-//		set.add(new RegressedStop(Method.ADP, 70, 4));
-//
-//		set.add(new RegressedStop(Method.ADP, 200, 0));
-//		set.add(new RegressedStop(Method.ADP, 200, 0.5));
-//		set.add(new RegressedStop(Method.ADP, 200, 1));
-//		set.add(new RegressedStop(Method.ADP, 200, 1.5));
-//		set.add(new RegressedStop(Method.ADP, 200, 2));
-//		set.add(new RegressedStop(Method.ADP, 200, 2.5));
-//		set.add(new RegressedStop(Method.ADP, 200, 3));
-//		set.add(new RegressedStop(Method.ADP, 200, 3.5));
-//		set.add(new RegressedStop(Method.ADP, 200, 4));
-//
-//		// SDP
-//		set.add(new RegressedStop(Method.SDP, 20, 0));
-//		set.add(new RegressedStop(Method.SDP, 20, 0.5));
-//		set.add(new RegressedStop(Method.SDP, 20, 1));
-//		set.add(new RegressedStop(Method.SDP, 20, 1.5));
-//		set.add(new RegressedStop(Method.SDP, 20, 2));
-//		set.add(new RegressedStop(Method.SDP, 20, 2.5));
-//		set.add(new RegressedStop(Method.SDP, 20, 3));
-//		set.add(new RegressedStop(Method.SDP, 20, 3.5));
-//		set.add(new RegressedStop(Method.SDP, 20, 4));
-//
-//		set.add(new RegressedStop(Method.SDP, 70, 0));
-//		set.add(new RegressedStop(Method.SDP, 70, 0.5));
-//		set.add(new RegressedStop(Method.SDP, 70, 1));
-//		set.add(new RegressedStop(Method.SDP, 70, 1.5));
-//		set.add(new RegressedStop(Method.SDP, 70, 2));
-//		set.add(new RegressedStop(Method.SDP, 70, 2.5));
-//		set.add(new RegressedStop(Method.SDP, 70, 3));
-//		set.add(new RegressedStop(Method.SDP, 70, 3.5));
-//		set.add(new RegressedStop(Method.SDP, 70, 4));
-//
-//		set.add(new RegressedStop(Method.SDP, 200, 0));
-//		set.add(new RegressedStop(Method.SDP, 200, 0.5));
-//		set.add(new RegressedStop(Method.SDP, 200, 1));
-//		set.add(new RegressedStop(Method.SDP, 200, 1.5));
-//		set.add(new RegressedStop(Method.SDP, 200, 2));
-//		set.add(new RegressedStop(Method.SDP, 200, 2.5));
-//		set.add(new RegressedStop(Method.SDP, 200, 3));
-//		set.add(new RegressedStop(Method.SDP, 200, 3.5));
-//		set.add(new RegressedStop(Method.SDP, 200, 4));
+		set.add(new RegressedStop(20, 0));
+		set.add(new RegressedStop(20, 0.5));
+		set.add(new RegressedStop(20, 1));
+		set.add(new RegressedStop(20, 1.5));
+		set.add(new RegressedStop(20, 2));
+		set.add(new RegressedStop(20, 2.5));
+		set.add(new RegressedStop(20, 3));
+		set.add(new RegressedStop(20, 3.5));
+		set.add(new RegressedStop(20, 4));
+
+		set.add(new RegressedStop(70, 0));
+		set.add(new RegressedStop(70, 0.5));
+		set.add(new RegressedStop(70, 1));
+		set.add(new RegressedStop(70, 1.5));
+		set.add(new RegressedStop(70, 2));
+		set.add(new RegressedStop(70, 2.5));
+		set.add(new RegressedStop(70, 3));
+		set.add(new RegressedStop(70, 3.5));
+		set.add(new RegressedStop(70, 4));
+
+		set.add(new RegressedStop(200, 0));
+		set.add(new RegressedStop(200, 0.5));
+		set.add(new RegressedStop(200, 1));
+		set.add(new RegressedStop(200, 1.5));
+		set.add(new RegressedStop(200, 2));
+		set.add(new RegressedStop(200, 2.5));
+		set.add(new RegressedStop(200, 3));
+		set.add(new RegressedStop(200, 3.5));
+		set.add(new RegressedStop(200, 4));
 //
 		return set;
 	}

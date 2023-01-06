@@ -461,8 +461,8 @@ public class DatabaseConnector {
 		Date lastDate = hd.askClose.oldestDate();
 		statement.executeUpdate("DELETE FROM historicaldata WHERE code='" + code + "' AND day >= '"
 				+ PGDATEFORMAT.format(lastDate) + "'::date");
-		System.out.println("DELETE FROM historicaldata WHERE code='" + code + "' AND day >= '"
-				+ PGDATEFORMAT.format(lastDate) + "'::date");
+//		System.out.println("DELETE FROM historicaldata WHERE code='" + code + "' AND day >= '"
+//				+ PGDATEFORMAT.format(lastDate) + "'::date");
 
 		// Insert new records
 		for (int i = 0; i < hd.size(); i++) {

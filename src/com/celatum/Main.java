@@ -11,15 +11,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.celatum.algos.Algo;
-import com.celatum.algos.BreakoutAlgoG;
-import com.celatum.algos.BullishHammerAlgo;
+import com.celatum.algos.BouncePeriodLowAlgo;
+import com.celatum.algos.BreakoutLongAlgo;
 import com.celatum.algos.HLHHAlgo;
-import com.celatum.algos.ImprovedReferenceAlgo;
-import com.celatum.algos.LongRegressionAlgo;
-import com.celatum.algos.SuperTrendAlgoNPO;
-import com.celatum.algos.shell.BouncePeriodLowShell;
-import com.celatum.algos.shell.HLHHShell;
-import com.celatum.algos.shell.HammerShell2023;
+import com.celatum.algos.ImprovedReferenceAlgo3;
+import com.celatum.algos.LongRegressionAlgo2023;
+import com.celatum.algos.SuperTrendLongAlgo;
 import com.celatum.algos.shell.LowerLowShortShell3;
 import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
@@ -30,7 +27,7 @@ import com.celatum.trading.Position;
 import com.celatum.view.Chart;
 
 public class Main {
-	public static final int NTHREAD = 20;
+	public static final int NTHREAD = 24; // 20 maxes out CPU at 100%
 	
 
 	private static void saveNewInstruments() {
@@ -71,8 +68,8 @@ public class Main {
 		
 		// Run
 		try {
-			backTest();
-//			liveRun();
+//			backTest();
+			liveRun();
 //			runBestAlgos(DataAccessOrchestrator.getStockWatchlist(), Source.AV_CODE);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -84,8 +81,10 @@ public class Main {
 	 * @throws Exception
 	 */
 	private static void liveRun() throws Exception {
-		DataAccessOrchestrator.refreshSavedHistories();
-		List<Instrument> instruments = DataAccessOrchestrator.getLiveWatchlist();
+		List<Instrument> instruments = DataAccessOrchestrator.getStockWatchlist();
+		Source s = Source.AV_CODE;
+		
+		DataAccessOrchestrator.refreshHistories(instruments, s);
 		
 //		runAlgoAggregate(new BullishHammerAlgo(), true, false); // 8.2% but with high trade perf
 //		runAlgoAggregate(new HLHHAlgo(), false, false); // 37.7%
@@ -95,15 +94,7 @@ public class Main {
 //		runAlgoAggregate(new LongRegressionAlgo(), false, false); // 10.7% should not be on this list, needs tuning
 		
 		// Algos
-		List<Algo> algos = new ArrayList<Algo>();
-		algos.add(new BullishHammerAlgo());
-		algos.add(new HLHHAlgo());
-		algos.add(new ImprovedReferenceAlgo());
-		algos.add(new SuperTrendAlgoNPO());
-		algos.add(new LongRegressionAlgo());
-		algos.add(new BreakoutAlgoG());
-		algos.add(new BouncePeriodLowShell());
-		algos.add(new LowerLowShortShell3()); // Not improving main algo enough but only short that works
+		List<Algo> algos = getBestAlgos();
 		
 		// Histories
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
@@ -174,8 +165,9 @@ public class Main {
 		Source s = Source.AV_CODE;
 		
 		// BESTs
-		evolveAlgo(new HLHHShell(), instruments, s);
-//		runAlgoAggregate(new HammerShell2023(), instruments, s);
+		evolveAlgo(new LowerLowShortShell3(), instruments, s);
+		
+//		runAlgoAggregate(new LowerLowShortShell3(), instruments, s);
 	}
 
 	/**
@@ -187,15 +179,7 @@ public class Main {
 	 * @throws Exception
 	 */
 	private static void runBestAlgos(List<Instrument> instruments, Source s) throws Exception {
-		// Algos
-		List<Algo> algos = new ArrayList<Algo>();
-		algos.add(new BullishHammerAlgo());
-		algos.add(new HLHHAlgo());
-		algos.add(new ImprovedReferenceAlgo());
-		algos.add(new SuperTrendAlgoNPO());
-		algos.add(new BreakoutAlgoG());
-		algos.add(new BouncePeriodLowShell());
-		algos.add(new LowerLowShortShell3());
+		List<Algo> algos = getBestAlgos();
 
 		// Histories
 		List<HistoricalData> histories = new ArrayList<HistoricalData>();
@@ -219,6 +203,18 @@ public class Main {
 		// View
 //		if (view)
 //			Chart.createAndShowGUI(histories, algo, bor, true);
+	}
+
+	private static List<Algo> getBestAlgos() {
+		// Algos
+		List<Algo> algos = new ArrayList<Algo>();
+		algos.add(new LongRegressionAlgo2023());
+		algos.add(new BreakoutLongAlgo());
+		algos.add(new HLHHAlgo());
+		algos.add(new ImprovedReferenceAlgo3());
+		algos.add(new SuperTrendLongAlgo());
+		algos.add(new BouncePeriodLowAlgo());
+		return algos;
 	}
 
 	/**
@@ -290,9 +286,10 @@ public class Main {
 		}
 	}
 
-	private static void evolveAlgo(Algo algo, List<Instrument> instruments, Source s) throws InterruptedException {
+	private static void evolveAlgo(Algo algo, List<Instrument> instruments, Source s) throws Exception {
 		GeneticEvolution g = new GeneticEvolution(instruments, s);
-		g.run(algo);
+		Algo bestAlgo = g.run(algo);
+		runAlgoAggregate(bestAlgo, instruments, s);
 	}
 }
 

@@ -1,15 +1,13 @@
-package com.celatum.algos.shell;
+package com.celatum.algos.shell.y2022;
 
 import java.util.Date;
 
 import com.celatum.BookOfRecord;
 import com.celatum.algos.Algo;
 import com.celatum.algos.entry.HigherHighs;
-import com.celatum.algos.entry.HigherHighs.Method;
 import com.celatum.algos.entry.NoPositionOpen;
 import com.celatum.algos.entry.NoViolentMoveDown;
 import com.celatum.algos.entry.RegressionTrend;
-import com.celatum.algos.entry.ReverseCondition;
 import com.celatum.algos.exit.DailyTrailingStop;
 import com.celatum.algos.exit.NotGoneMyWay;
 import com.celatum.algos.exit.RegressedStop;
@@ -23,17 +21,18 @@ import com.celatum.maths.Calc;
 import com.celatum.maths.ZigZagRelative;
 import com.celatum.trading.LongOrder;
 
-public class BreakoutLongShell extends Algo {
+public class BreakoutAlgoG extends Algo {
 	private Serie atr;
 	private double atrBreath = 2;
 	
-	public BreakoutLongShell() {
+	public BreakoutAlgoG() {
 		addAlgoComponent(new NoPositionOpen());
-		
-		// BreakoutLongShell-NPO-!HH/SDP2002.5-HH/SDP2004.0--SFM/705.02.0 312 -17,632 2,653,155 11.56%
-//		addAlgoComponent(new ReverseCondition(new HigherHighs(Method.SDP, 200, 2.5)));
-//		addAlgoComponent(new HigherHighs(Method.SDP, 200, 4));
-//		addAlgoComponent(new SignificantFavorableMove(70, 5, 2));
+		// BreakoutLongShell-HH/ADP2003.0-EMAC/50200-RT/700.3-NVMD/SDP10--NFTL/10 174 -14,453 3,211,053 18.47%
+//		BreakoutLongShell-NPO-RT/2000.1-HH/ADP2003.5-NVMD/SDP10--SFM/204.02.0 221 -8,207 1,269,907 12.39%
+		addAlgoComponent(new RegressionTrend(200, 0.1));
+		addAlgoComponent(new HigherHighs(HigherHighs.Method.ADP, 200, 3.5));
+		addAlgoComponent(new NoViolentMoveDown(NoViolentMoveDown.Method.SDP, 10));
+		addAlgoComponent(new SignificantFavorableMove(20, 4.0, 2.0));
 	}
 
 	@Override
@@ -83,9 +82,9 @@ public class BreakoutLongShell extends Algo {
 			bor.cancelAllOrders(hd.instrument, hd.getReferenceDate(), getGroup());
 			double distance = h2.getValue() - zz.getLows().get(0);
 			double entry = breakout - distance / 2.0;
-			
+
 			LongOrder order = new LongOrder(hd.instrument, getGroup(), hd.getReferenceDate(), entry);
-			order.setLimit(breakout + distance *0.9);
+			order.setLimit(breakout + distance * 0.9);
 			order.setStopCorrect(zz.getLows().get(0));
 			bor.addOrder(order);
 		}
@@ -98,6 +97,6 @@ public class BreakoutLongShell extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new BreakoutLongShell();
+		return new BreakoutAlgoG();
 	}
 }

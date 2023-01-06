@@ -1,6 +1,7 @@
-package com.celatum.algos;
+package com.celatum.algos.shell;
 
 import com.celatum.BookOfRecord;
+import com.celatum.algos.Algo;
 import com.celatum.algos.entry.HigherHighs;
 import com.celatum.algos.entry.HigherHighs.Method;
 import com.celatum.algos.entry.RegressionTrend;
@@ -17,12 +18,12 @@ import com.celatum.maths.Calc;
 import com.celatum.maths.ZigZagRelative;
 import com.celatum.trading.LongOrder;
 
-public class HLHHAlgo extends Algo {
+public class HLHHShell2023 extends Algo {
 	private Serie atr;
 	private double minPercent;
 	private double devBreath = 3;
 	
-	public HLHHAlgo() {
+	public HLHHShell2023() {
 		// HLHHShell2023-HH/SDP2004.5-RT/20-0.3--TE/20--RS/703.5--DTS/ADP704.0--SFM/706.01.0 1047 -39,469 35,507,369 24.89%
 		addAlgoComponent(new TimedExit(20));
 		addAlgoComponent(new HigherHighs(Method.SDP, 200, 4.5));
@@ -94,6 +95,6 @@ public class HLHHAlgo extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new HLHHAlgo();
+		return new HLHHShell2023();
 	}
 }

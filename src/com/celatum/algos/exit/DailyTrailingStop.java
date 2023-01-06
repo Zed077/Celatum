@@ -119,8 +119,8 @@ public class DailyTrailingStop extends ExitStrategy {
 		HashSet<ExitStrategy> set = new HashSet<ExitStrategy>();
 		// ATR
 //		set.add(new DailyTrailingStop(Method.ATR, 20, 0));
-//		set.add(new DailyTrailingStop(Method.ATR, 20, 0.5));
-//		set.add(new DailyTrailingStop(Method.ATR, 20, 1));
+		set.add(new DailyTrailingStop(Method.ATR, 20, 0.5));
+		set.add(new DailyTrailingStop(Method.ATR, 20, 1));
 		set.add(new DailyTrailingStop(Method.ATR, 20, 1.5));
 		set.add(new DailyTrailingStop(Method.ATR, 20, 2));
 		set.add(new DailyTrailingStop(Method.ATR, 20, 2.5));
@@ -129,8 +129,8 @@ public class DailyTrailingStop extends ExitStrategy {
 		set.add(new DailyTrailingStop(Method.ATR, 20, 4));
 
 //		set.add(new DailyTrailingStop(Method.ATR, 70, 0));
-//		set.add(new DailyTrailingStop(Method.ATR, 70, 0.5));
-//		set.add(new DailyTrailingStop(Method.ATR, 70, 1));
+		set.add(new DailyTrailingStop(Method.ATR, 70, 0.5));
+		set.add(new DailyTrailingStop(Method.ATR, 70, 1));
 		set.add(new DailyTrailingStop(Method.ATR, 70, 1.5));
 		set.add(new DailyTrailingStop(Method.ATR, 70, 2));
 		set.add(new DailyTrailingStop(Method.ATR, 70, 2.5));
@@ -139,8 +139,8 @@ public class DailyTrailingStop extends ExitStrategy {
 		set.add(new DailyTrailingStop(Method.ATR, 70, 4));
 
 //		set.add(new DailyTrailingStop(Method.ATR, 200, 0));
-//		set.add(new DailyTrailingStop(Method.ATR, 200, 0.5));
-//		set.add(new DailyTrailingStop(Method.ATR, 200, 1));
+		set.add(new DailyTrailingStop(Method.ATR, 200, 0.5));
+		set.add(new DailyTrailingStop(Method.ATR, 200, 1));
 		set.add(new DailyTrailingStop(Method.ATR, 200, 1.5));
 		set.add(new DailyTrailingStop(Method.ATR, 200, 2));
 		set.add(new DailyTrailingStop(Method.ATR, 200, 2.5));
@@ -150,8 +150,8 @@ public class DailyTrailingStop extends ExitStrategy {
 		
 		// ADP
 //		set.add(new DailyTrailingStop(Method.ADP, 20, 0));
-//		set.add(new DailyTrailingStop(Method.ADP, 20, 0.5));
-//		set.add(new DailyTrailingStop(Method.ADP, 20, 1));
+		set.add(new DailyTrailingStop(Method.ADP, 20, 0.5));
+		set.add(new DailyTrailingStop(Method.ADP, 20, 1));
 		set.add(new DailyTrailingStop(Method.ADP, 20, 1.5));
 		set.add(new DailyTrailingStop(Method.ADP, 20, 2));
 		set.add(new DailyTrailingStop(Method.ADP, 20, 2.5));
@@ -160,8 +160,8 @@ public class DailyTrailingStop extends ExitStrategy {
 		set.add(new DailyTrailingStop(Method.ADP, 20, 4));
 
 //		set.add(new DailyTrailingStop(Method.ADP, 70, 0));
-//		set.add(new DailyTrailingStop(Method.ADP, 70, 0.5));
-//		set.add(new DailyTrailingStop(Method.ADP, 70, 1));
+		set.add(new DailyTrailingStop(Method.ADP, 70, 0.5));
+		set.add(new DailyTrailingStop(Method.ADP, 70, 1));
 		set.add(new DailyTrailingStop(Method.ADP, 70, 1.5));
 		set.add(new DailyTrailingStop(Method.ADP, 70, 2));
 		set.add(new DailyTrailingStop(Method.ADP, 70, 2.5));
@@ -170,8 +170,8 @@ public class DailyTrailingStop extends ExitStrategy {
 		set.add(new DailyTrailingStop(Method.ADP, 70, 4));
 
 //		set.add(new DailyTrailingStop(Method.ADP, 200, 0));
-//		set.add(new DailyTrailingStop(Method.ADP, 200, 0.5));
-//		set.add(new DailyTrailingStop(Method.ADP, 200, 1));
+		set.add(new DailyTrailingStop(Method.ADP, 200, 0.5));
+		set.add(new DailyTrailingStop(Method.ADP, 200, 1));
 		set.add(new DailyTrailingStop(Method.ADP, 200, 1.5));
 		set.add(new DailyTrailingStop(Method.ADP, 200, 2));
 		set.add(new DailyTrailingStop(Method.ADP, 200, 2.5));
@@ -181,9 +181,9 @@ public class DailyTrailingStop extends ExitStrategy {
 		
 		// SDP
 //		set.add(new DailyTrailingStop(Method.SDP, 20, 0));
-//		set.add(new DailyTrailingStop(Method.SDP, 20, 0.5));
-//		set.add(new DailyTrailingStop(Method.SDP, 20, 1));
-//		set.add(new DailyTrailingStop(Method.SDP, 20, 1.5));
+		set.add(new DailyTrailingStop(Method.SDP, 20, 0.5));
+		set.add(new DailyTrailingStop(Method.SDP, 20, 1));
+		set.add(new DailyTrailingStop(Method.SDP, 20, 1.5));
 		set.add(new DailyTrailingStop(Method.SDP, 20, 2));
 		set.add(new DailyTrailingStop(Method.SDP, 20, 2.5));
 		set.add(new DailyTrailingStop(Method.SDP, 20, 3));
@@ -191,9 +191,9 @@ public class DailyTrailingStop extends ExitStrategy {
 		set.add(new DailyTrailingStop(Method.SDP, 20, 4));
 
 //		set.add(new DailyTrailingStop(Method.SDP, 70, 0));
-//		set.add(new DailyTrailingStop(Method.SDP, 70, 0.5));
-//		set.add(new DailyTrailingStop(Method.SDP, 70, 1));
-//		set.add(new DailyTrailingStop(Method.SDP, 70, 1.5));
+		set.add(new DailyTrailingStop(Method.SDP, 70, 0.5));
+		set.add(new DailyTrailingStop(Method.SDP, 70, 1));
+		set.add(new DailyTrailingStop(Method.SDP, 70, 1.5));
 		set.add(new DailyTrailingStop(Method.SDP, 70, 2));
 		set.add(new DailyTrailingStop(Method.SDP, 70, 2.5));
 		set.add(new DailyTrailingStop(Method.SDP, 70, 3));
@@ -201,9 +201,9 @@ public class DailyTrailingStop extends ExitStrategy {
 		set.add(new DailyTrailingStop(Method.SDP, 70, 4));
 
 //		set.add(new DailyTrailingStop(Method.SDP, 200, 0));
-//		set.add(new DailyTrailingStop(Method.SDP, 200, 0.5));
-//		set.add(new DailyTrailingStop(Method.SDP, 200, 1));
-//		set.add(new DailyTrailingStop(Method.SDP, 200, 1.5));
+		set.add(new DailyTrailingStop(Method.SDP, 200, 0.5));
+		set.add(new DailyTrailingStop(Method.SDP, 200, 1));
+		set.add(new DailyTrailingStop(Method.SDP, 200, 1.5));
 		set.add(new DailyTrailingStop(Method.SDP, 200, 2));
 		set.add(new DailyTrailingStop(Method.SDP, 200, 2.5));
 		set.add(new DailyTrailingStop(Method.SDP, 200, 3));

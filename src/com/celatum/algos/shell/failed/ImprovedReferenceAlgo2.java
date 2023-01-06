@@ -1,11 +1,14 @@
-package com.celatum.algos;
+package com.celatum.algos.shell.failed;
 
 import com.celatum.BookOfRecord;
+import com.celatum.algos.Algo;
 import com.celatum.algos.entry.HigherHighs;
+import com.celatum.algos.entry.HigherHighs.Method;
+import com.celatum.algos.entry.NoViolentMoveDown;
 import com.celatum.algos.entry.ReverseCondition;
 import com.celatum.algos.exit.DailyTrailingStop;
-import com.celatum.algos.exit.EMATippingStop;
-import com.celatum.algos.entry.HigherHighs.Method;
+import com.celatum.algos.exit.EMAsDistanceStop;
+import com.celatum.algos.exit.RegressedTrendStop;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.maths.Calc;
@@ -13,11 +16,11 @@ import com.celatum.maths.LinearRegression;
 import com.celatum.trading.LongOrder;
 
 /**
- * Tuned for big moves like Tesla. Not super efficient outside of that.
+ * Tune without Tesla. Not very good. Does not work well with HLHH
  * @author cedric.ladde
  *
  */
-public class ImprovedReferenceAlgo extends Algo {
+public class ImprovedReferenceAlgo2 extends Algo {
 	private Serie atr;
 	private Serie lowerKC;
 	private Serie midKC;
@@ -26,7 +29,7 @@ public class ImprovedReferenceAlgo extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new ImprovedReferenceAlgo();
+		return new ImprovedReferenceAlgo2();
 	}
 
 	@Override
@@ -46,21 +49,17 @@ public class ImprovedReferenceAlgo extends Algo {
 		hd.syncReferenceIndex(lowerKC);
 		hd.syncReferenceIndex(midKC);
 		hd.syncReferenceIndex(upperKC);
-		
+
 		// EMEA 50
 		ema50 = Calc.ema(hd.midClose, 50);
 		hd.syncReferenceIndex(ema50);
-		
-		// ImprovedReferenceShell-!HH/SDP204.5-HH/ADP203.0--DTS/ADP2003.5 336 -20,810 29,821,381 37.34%
-//		addAlgoComponent(new ReverseCondition(new HigherHighs(Method.SDP, 20, 4.5)));
-//		addAlgoComponent(new HigherHighs(Method.ADP, 20, 3.0));
-//		addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.ADP, 200, 3.5));
-		
-		// ImprovedReferenceShell-!HH/SDP204.5-HH/ADP203.0--DTS/SDP703.0--EMAT/70 373 -11,646 25,702,914 35.98%
-		addAlgoComponent(new ReverseCondition(new HigherHighs(Method.SDP, 20, 4.5)));
-		addAlgoComponent(new HigherHighs(Method.ADP, 20, 3.0));
+
+		// ImprovedReferenceShell-!HH/ADP205.0-NVMO/ATR10703.0--DTS/SDP703.0--EDS/700.02.0--RTS/700.05 327 -6,253 3,002,656 17.78%
+		addAlgoComponent(new ReverseCondition(new HigherHighs(Method.SDP, 20, 5.0)));
+		addAlgoComponent(new NoViolentMoveDown(NoViolentMoveDown.Method.ATR, 10));
 		addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.SDP, 70, 3));
-		addAlgoComponent(new EMATippingStop(70));
+		addAlgoComponent(new EMAsDistanceStop(70, 0, 2));
+		addAlgoComponent(new RegressedTrendStop(70, 0.05));
 	}
 
 	@Override
@@ -78,7 +77,7 @@ public class ImprovedReferenceAlgo extends Algo {
 		boolean fallingKnife = false;
 //		fallingKnife = (hd.midHigh.get(1) - hd.midLow.get(0)) > 2 * atr.get(0);
 //		fallingKnife = hd.midClose.get(0) < hd.midOpen.get(0);
-		
+
 		/**
 		 * TODO see if we can increase the limit placed on rate of change dynamically.
 		 * e.g. if we have 0.2 then we should sell if we go below 0.2.

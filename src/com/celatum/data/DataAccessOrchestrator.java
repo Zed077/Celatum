@@ -248,6 +248,41 @@ public class DataAccessOrchestrator {
 			}
 		}
 	}
+
+	public static boolean refreshHistories(Collection<Instrument> instruments, Source s) {
+		boolean allUpdated = true;
+		for (Instrument inst : instruments) {
+			HistoricalData hd = new HistoricalData(inst, s);
+			try {
+				// Get penultimate recorded date from DB
+				Date startDate = DatabaseConnector.getLastUpdatedDate(inst, s);
+
+				// Get data from relevant source
+				switch (s) {
+				case IG_EPIC:
+					// Obtain new IG prices from that date onward
+					IGConnector.connect(IGCredentials.UK_Credentials);
+					IGConnector.getHistoricalPrices(hd, startDate);
+					break;
+				case AV_CODE:
+					double days = TimeUnit.DAYS.convert(new Date().getTime() - startDate.getTime(), TimeUnit.MILLISECONDS);
+					AlphaVantageConnector.getHistoricalPrices(hd, days > 100);
+					break;
+				default:
+					break;
+				}
+
+				// Store prices in DB
+				DatabaseConnector.updateHistoricalData(hd);
+			} catch (Exception e) {
+				System.err
+						.println("Could not refresh data for code:" + hd.getCode() + ", source:" + s + ", name:" + inst.getName());
+				e.printStackTrace();
+				allUpdated = false;
+			}
+		}
+		return allUpdated;
+	}
 	
 	public static void saveHistory(Instrument instrument) {
 		// IG

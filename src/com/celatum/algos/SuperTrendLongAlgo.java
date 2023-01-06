@@ -1,57 +1,47 @@
 package com.celatum.algos;
 
-import java.awt.Color;
-
 import com.celatum.BookOfRecord;
-import com.celatum.algos.entry.EMACompare;
-import com.celatum.algos.entry.Hammer;
-import com.celatum.algos.entry.HigherHighs;
-import com.celatum.algos.entry.NoPositionOpen;
-import com.celatum.algos.entry.NoViolentMoveDown;
-import com.celatum.algos.entry.RegressionTrend;
-import com.celatum.algos.entry.ReverseCondition;
-import com.celatum.algos.entry.SuperTrendIndicator;
-import com.celatum.algos.exit.DailyTrailingStop;
-import com.celatum.algos.exit.FarFromEMAStop;
-import com.celatum.algos.exit.RemoveLimit;
-import com.celatum.algos.exit.SignificantFavorableMove;
-import com.celatum.algos.exit.TightenStopWithAge;
-import com.celatum.algos.exit.TightenStopWithEMA;
+import com.celatum.algos.entry.*;
+import com.celatum.algos.entry.HigherHighs.Method;
+import com.celatum.algos.exit.*;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
-import com.celatum.data.SerieItem;
 import com.celatum.maths.ATR;
 import com.celatum.maths.Calc;
 import com.celatum.maths.SuperTrend;
-import com.celatum.maths.ZigZagRelative;
 import com.celatum.trading.LongOrder;
 import com.celatum.trading.Position;
-import com.celatum.trading.ShortOrder;
 
-public class SuperTrendAlgo extends Algo {
+public class SuperTrendLongAlgo extends Algo {
 	private Serie adp;
 	private Serie supertrend;
-//	private Serie hplot = new Serie();
-//	private Serie lplot = new Serie();
-//	private Serie oplot = new Serie();
 	private int adpPeriod = 70;
 
-	public SuperTrendAlgo() {
+	public SuperTrendLongAlgo() {
+		// Base
+		addAlgoComponent(new TimedExit(20));
+		addAlgoComponent(new SuperTrendIndicator());
+		
+		// Algo on previous dataset
 		// SuperTrendShell-ST/10SMA-HH/SDP703.0-!HH/ADP702.0-NVMD/ADP4--TSWA/80--DTS/ATR2003.5--FFE/707.0--SFM/2006.00.5 3190 -31,957 31,608,975 37.41%
 		
-		addAlgoComponent(new TightenStopWithAge(80));
-		addAlgoComponent(new NoPositionOpen());
+		// SuperTrendLongShell-NPO-ST/10SMA-EMAD/704.0-OBB/201.0true-RT/200.2-NVMD/ADP5--TSWA/80--RS/204.0--FFE/708.0--RL 342 -97,502 7,195,594 16.39%
+		// SuperTrendLongShell-ST/10SMA-NPO-EMAD/704.0-NVMD/ADP10--RS/2004.0--NGMW/50.5--FFE/708.0 954 -79,111 3,896,194 13.38%
+		// SuperTrendLongShell-NPO-ST/10SMA-EMAD/704.0-OBB/201.0true-RT/200.2-NVMD/ADP5--DTS/SDP704.0--EDS/700.02.0--RS/204.0 628 -122,080 5,544,577 15.09%
 		
-//		addAlgoComponent(new EMACompare(5, 20));
-		addAlgoComponent(new SuperTrendIndicator());
-		addAlgoComponent(new HigherHighs(HigherHighs.Method.SDP, 70, 3));
-		addAlgoComponent(new ReverseCondition(new HigherHighs(HigherHighs.Method.ADP, 70, 2)));
-		addAlgoComponent(new NoViolentMoveDown(NoViolentMoveDown.Method.ADP,4));
-		addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.ATR, 200, 3.5));
-		addAlgoComponent(new FarFromEMAStop(70, 7));
-		addAlgoComponent(new SignificantFavorableMove(200, 6, 0.5));
+		// NPO not great
+		// SuperTrendLongShell-NPO-ST/10SMA-RT/200.2-NVMD/ADP5-OBB/201.0true-SMAD/2002.0--TE/20--SFM/704.01.0--DTS/SDP2004.0 1107 -93,558 3,192,158 12.42%
+		// TightenStopWithAge not as good as TimedExit
+		// SuperTrendLongShell-ST/10SMA-NPO-EMAD/704.0-NVMD/SDP10--TSWA/80--RS/204.0--FFE/708.0--RL 349 -93,445 6,804,937 16.11%
 		
-		// SuperTrendShell-ST/10SMA-!HH/ADP2002.0-EMAC/2050-HH/SDP703.0--TSWA/80 2389 -23,071 20,688,220 33.68%
+		// SuperTrendLongShell-ST/10SMA-EMAD/51.0-HH/ADP704.0-EMAC/50200--TE/20--RS/703.5--RTS/700.05--TSWA/20--RL 1012 -119,589 9,803,487 18.01%
+		addAlgoComponent(new EMADistance(5, 1.0));
+		addAlgoComponent(new HigherHighs(Method.ADP, 70, 4.0));
+		addAlgoComponent(new EMACompare(50, 200));
+		addAlgoComponent(new RegressedStop(70, 3.5));
+		addAlgoComponent(new RegressedTrendStop(70, 0.05));
+		addAlgoComponent(new TightenStopWithAge(20));
+		addAlgoComponent(new RemoveLimit());
 	}
 
 	@Override
@@ -98,6 +88,6 @@ public class SuperTrendAlgo extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new SuperTrendAlgo();
+		return new SuperTrendLongAlgo();
 	}
 }

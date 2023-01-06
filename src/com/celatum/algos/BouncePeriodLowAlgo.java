@@ -1,40 +1,40 @@
-package com.celatum.algos.shell;
+package com.celatum.algos;
 
 import com.celatum.BookOfRecord;
-import com.celatum.algos.Algo;
-import com.celatum.algos.entry.EMADistance;
+import com.celatum.algos.entry.Hammer;
 import com.celatum.algos.entry.HigherHighs;
+import com.celatum.algos.entry.HigherHighs.Method;
 import com.celatum.algos.entry.NearPeriodLow;
 import com.celatum.algos.entry.NoPositionOpen;
+import com.celatum.algos.entry.RegressionTrend;
 import com.celatum.algos.entry.ReverseCondition;
 import com.celatum.algos.exit.DailyTrailingStop;
-import com.celatum.algos.exit.RegressedTrendStop;
+import com.celatum.algos.exit.NegativeForTooLong;
+import com.celatum.algos.exit.NotGoneMyWay;
+import com.celatum.algos.exit.RemoveLimit;
 import com.celatum.algos.exit.SignificantFavorableMove;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.data.SerieItem;
 import com.celatum.maths.Calc;
 import com.celatum.maths.ZigZagRelative;
-import com.celatum.trading.StopShortOrder;
+import com.celatum.trading.LongOrder;
 
-public class LowerLowShortShell3 extends Algo {
+public class BouncePeriodLowAlgo extends Algo {
 	private Serie atr;
 	private int period = 70;
 	
-	public LowerLowShortShell3() {
+	public BouncePeriodLowAlgo() {
 		addAlgoComponent(new NoPositionOpen());
 		addAlgoComponent(new NearPeriodLow(period));
-		addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.ADP,70, 2.5));
-
-		// LowerLowShortShell3-NPO-NPL/70-!HH/SDP2005.5-EMAD/20-1.5--DTS/ADP702.5--EMAT/20--SFM/2005.00.5 59 -38,234 739,005 9.28%
-		// LowerLowShortShell3-NPO-NPL/70-EMAD/20-1.5-!HH/SDP2005.5--DTS/ADP702.5--DTS/ADP2002.5--SFM/2005.00.5 59 -37,859 770,770 9.5%
 		
-//		addAlgoComponent(new EMADistance(20, -1.5));
-//		addAlgoComponent(new ReverseCondition(new HigherHighs(HigherHighs.Method.SDP, 200, 5.5)));
-//		addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.ADP,200, 2.5));
-//		addAlgoComponent(new SignificantFavorableMove(200, 5, 0.5));
+//		addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.ADP,70, 2.5));
 		
-		// LowerLowShortShell3-NPO-NPL/70-!SMAD/2002.0-OBB/201.0false--DTS/ADP702.5--DTS/SDP701.5--EMAT/20--RTS/2000.1--TSEMA/ADP202.0 310 -179,936 -175,724 -5.27%
+		// BouncePeriodLowShell-NPO-NPL/70-!HH/SDP2002.5--DTS/ATR201.5--SFM/2003.01.0 349 -2,713 1,338,293 8.6%
+		addAlgoComponent(new ReverseCondition(new HigherHighs(Method.SDP, 200, 2.5)));
+		addAlgoComponent(new DailyTrailingStop(com.celatum.algos.exit.DailyTrailingStop.Method.ATR, 20, 1.5));
+		addAlgoComponent(new SignificantFavorableMove(200, 3, 1));
+		
 	}
 
 	@Override
@@ -55,10 +55,13 @@ public class LowerLowShortShell3 extends Algo {
 		SerieItem lowest = zz.lowestSince(hd.midLow.getDate(period));
 		
 		// Place order
-		double entry = lowest.getValue() - 0.2 * atr.get(0);
-		StopShortOrder order = new StopShortOrder(hd.instrument, getGroup(), hd.getReferenceDate(), entry);
-		order.setStop(entry + atr.get(0) * 1);
-		order.setLimit(entry - atr.get(0) * 2.5);
+		if (lowest == null) {
+			System.out.println();
+		}
+		double entry = lowest.getValue() + 0.2 * atr.get(0);
+		LongOrder order = new LongOrder(hd.instrument, getGroup(), hd.getReferenceDate(), entry);
+		order.setStop(lowest.getValue() - 0.2 * atr.get(0));
+		order.setLimit(entry + atr.get(0) * 2);
 		bor.addOrder(order);
 		
 		// Plot
@@ -75,6 +78,6 @@ public class LowerLowShortShell3 extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new LowerLowShortShell3();
+		return new BouncePeriodLowAlgo();
 	}
 }

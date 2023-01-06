@@ -1,7 +1,6 @@
-package com.celatum.algos.shell;
+package com.celatum.algos;
 
 import com.celatum.BookOfRecord;
-import com.celatum.algos.Algo;
 import com.celatum.algos.entry.HigherHighs;
 import com.celatum.algos.entry.HigherHighs.Method;
 import com.celatum.algos.entry.RegressionTrend;
@@ -14,29 +13,24 @@ import com.celatum.maths.Calc;
 import com.celatum.maths.LinearRegression;
 import com.celatum.trading.LongOrder;
 
-public class ImprovedReferenceShell extends Algo {
+public class ImprovedReferenceAlgo3 extends Algo {
 	private Serie atr;
 	private Serie lowerKC;
 	private Serie midKC;
 	private Serie upperKC;
 	private Serie ema50;
 	
-
-	public ImprovedReferenceShell() {
+	public ImprovedReferenceAlgo3() {
 		// ImprovedReferenceShell-HH/ADP203.0-RT/700.2--DTS/ADP2004.0--EMAT/50 1524 -182,918 121,575,946 31.95%
-//		addAlgoComponent(new HigherHighs(Method.ADP, 20, 3));
-//		addAlgoComponent(new RegressionTrend(70, 0.2));
-//		addAlgoComponent(new DailyTrailingStop(com.celatum.algos.exit.DailyTrailingStop.Method.ADP, 200, 4));
-//		addAlgoComponent(new EMATippingStop(50));
-		
-		// ImprovedReferenceShell 376 -242,499 139,689 2%
-		
-//		addAlgoComponent(new TimedExit(20));
+		addAlgoComponent(new HigherHighs(Method.ADP, 20, 3));
+		addAlgoComponent(new RegressionTrend(70, 0.2));
+		addAlgoComponent(new DailyTrailingStop(com.celatum.algos.exit.DailyTrailingStop.Method.ADP, 200, 4));
+		addAlgoComponent(new EMATippingStop(50));
 	}
 
 	@Override
 	public Algo getInstance() {
-		return new ImprovedReferenceShell();
+		return new ImprovedReferenceAlgo3();
 	}
 
 	@Override
