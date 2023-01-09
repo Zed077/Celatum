@@ -74,6 +74,10 @@ public abstract class Order {
 		this.stopType = StopType.STANDARD;
 	}
 
+	/**
+	 * Adjust the stop price if it is inferior to proposed entry price
+	 * @param stopPrice
+	 */
 	public void setStopCorrect(double stopPrice) {
 		this.stop = validateStop(entryPrice, stopPrice, true);
 		this.stopType = StopType.STANDARD;

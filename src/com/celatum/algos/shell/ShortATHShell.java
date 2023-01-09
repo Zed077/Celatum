@@ -15,15 +15,15 @@ import com.celatum.trading.ShortOrder;
  *
  */
 public class ShortATHShell extends Algo {
-	private Serie adp;
+	private Serie atrPercent;
 	private Serie ath;
 	private double distanceToATH = 3;
-	private int period = 20;
+	private int period = 6*20;
 
 	@Override
 	protected void setUp(HistoricalData hd, BookOfRecord bor) {
-		adp = Calc.atrPercent(hd, 20);
-		hd.syncReferenceIndex(adp);
+		atrPercent = Calc.atrPercent(hd, 20);
+		hd.syncReferenceIndex(atrPercent);
 
 		ath = HighLow.allTimeHigh(hd.midHigh);
 		hd.syncReferenceIndex(ath);
@@ -43,10 +43,10 @@ public class ShortATHShell extends Algo {
 	}
 
 	private void buyOnATH(HistoricalData hd, BookOfRecord bor) {
-		if (hd.midHigh.get(0) > ath.get(0) * (1 - distanceToATH * adp.get(0))) {
+		if (hd.midHigh.get(0) > ath.get(0) * (1 - distanceToATH * atrPercent.get(0))) {
 			LongOrder order = new LongOrder(hd.instrument, getGroup(), hd.getReferenceDate(), ath.get(0));
-			order.setStop(ath.get(0) * (1 - adp.get(0) * 3));
-			order.setLimit(ath.get(0) * (1 + adp.get(0) * 3));
+			order.setStop(ath.get(0) * (1 - atrPercent.get(0) * 3));
+			order.setLimit(ath.get(0) * (1 + atrPercent.get(0) * 3));
 			bor.addOrder(order);
 		}
 	}
@@ -56,26 +56,26 @@ public class ShortATHShell extends Algo {
 		double allTimeHigh = ath.get(period - 1);
 
 		// Come from below
-		for (int i = 0; i < period; i++) {
-			if (hd.midHigh.get(0) > allTimeHigh)
-				return;
-		}
+//		for (int i = 0; i < period; i++) {
+//			if (hd.midHigh.get(0) > allTimeHigh)
+//				return;
+//		}
 
 		// Sell for potential mini pull back
-		if (hd.midHigh.get(0) > ath.get(0) * (1 - distanceToATH * adp.get(0))) {
+		if (hd.midHigh.get(0) > ath.get(0) * (1 - distanceToATH * atrPercent.get(0))) {
 			ShortOrder order = new ShortOrder(hd.instrument, getGroup(), hd.getReferenceDate(), ath.get(0));
-			order.setStop(ath.get(0) * (1 + adp.get(0) * 1));
-			order.setLimit(ath.get(0) * (1 - adp.get(0) * 3));
+			order.setStop(ath.get(0) * (1 + atrPercent.get(0) * 1));
+			order.setLimit(ath.get(0) * (1 - atrPercent.get(0) * 3));
 			bor.addOrder(order);
 		}
 	}
 
 	private void sellOnATHNotGood(HistoricalData hd, BookOfRecord bor) {
 		// Sell for potential mini pull back
-		if (hd.midHigh.get(0) > ath.get(0) * (1 - distanceToATH * adp.get(0))) {
+		if (hd.midHigh.get(0) > ath.get(0) * (1 - distanceToATH * atrPercent.get(0))) {
 			ShortOrder order = new ShortOrder(hd.instrument, getGroup(), hd.getReferenceDate(), ath.get(0));
-			order.setStop(ath.get(0) * (1 + adp.get(0) * 1));
-			order.setLimit(ath.get(0) * (1 - adp.get(0) * 3));
+			order.setStop(ath.get(0) * (1 + atrPercent.get(0) * 1));
+			order.setLimit(ath.get(0) * (1 - atrPercent.get(0) * 3));
 			bor.addOrder(order);
 		}
 	}

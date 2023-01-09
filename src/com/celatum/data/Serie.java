@@ -50,6 +50,17 @@ public class Serie implements Cloneable {
 		this.put(si);
 	}
 	
+	/**
+	 * Retain only the last nCandles of data (most recent)
+	 * @param nCandles
+	 */
+	public void head(int nCandles) {
+		referenceIndex = 0;
+		Date earliestDate = this.getDate(nCandles-1);
+		dataset.entrySet().removeIf(entry -> entry.getKey().before(earliestDate));
+		cacheValues();
+	}
+	
 	public void removeOldest() {
 		dataset.remove(dataset.firstEntry().getKey());
 		cacheValues();

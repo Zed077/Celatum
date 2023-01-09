@@ -1,12 +1,11 @@
-package com.celatum.algos;
+package com.celatum.algos.shell;
 
 import com.celatum.BookOfRecord;
+import com.celatum.algos.Algo;
 import com.celatum.algos.entry.HigherHighs;
 import com.celatum.algos.entry.HigherHighs.Method;
 import com.celatum.algos.entry.RegressionTrend;
-import com.celatum.algos.entry.ReverseCondition;
 import com.celatum.algos.exit.DailyTrailingStop;
-import com.celatum.algos.exit.NegativeForTooLong;
 import com.celatum.algos.exit.RegressedStop;
 import com.celatum.algos.exit.SignificantFavorableMove;
 import com.celatum.algos.exit.TimedExit;
@@ -17,19 +16,16 @@ import com.celatum.maths.Calc;
 import com.celatum.maths.ZigZagRelative;
 import com.celatum.trading.LongOrder;
 
-public class HLHHAlgo extends Algo {
+public class HLHHTrackingShell2023 extends Algo {
 	private Serie atr;
-	private double minPercent;
-	private double devBreath = 3;
+	private Serie minPercent;
+	private int period = 200;
+	private double devBreath = 6;
 	
-	public HLHHAlgo() {
-		// HLHHShell2023-HH/SDP2004.5-RT/20-0.3--TE/20--RS/703.5--DTS/ADP704.0--SFM/706.01.0 1047 -39,469 35,507,369 24.89%
-		addAlgoComponent(new TimedExit(20));
-		addAlgoComponent(new HigherHighs(Method.SDP, 200, 4.5));
-		addAlgoComponent(new RegressionTrend(20, -0.3));
-		addAlgoComponent(new RegressedStop(70, 3.5));
-		addAlgoComponent(new DailyTrailingStop(com.celatum.algos.exit.DailyTrailingStop.Method.ADP, 70, 4.0));
-		addAlgoComponent(new SignificantFavorableMove(70, 6, 1));
+	public HLHHTrackingShell2023() {
+		addAlgoComponent(new TimedExit(10));
+		
+		// HLHHTrackingShell2023-HH/ADP2004.5-NVMD/SDP5-OBB/202.5false--TE/10--RS/204.0--RSIT/70true--SFM/706.01.0 854 -53,619 20,547,114 21.91%
 	}
 
 	@Override
@@ -39,14 +35,8 @@ public class HLHHAlgo extends Algo {
 		hd.syncReferenceIndex(atr);
 
 		// ZigZag
-		int period = 1000; // was 1000
-//		double atrRange = Calc.atr(hd, period).get(0);
-//		minPercent = devBreath * atrRange / (hd.midClose.get(0) + hd.midClose.get(period)) * 2;
-		
-		double adp = Calc.atrPercent(hd, period).get(0) * devBreath;
-		
-//		double sdp = Calc.standardDeviationPercent(hd, period).get(0) * devBreath;
-		minPercent = adp;
+		minPercent = Calc.atrPercent(hd, period);
+		hd.syncReferenceIndex(minPercent);
 	}
 
 	@Override
@@ -60,7 +50,7 @@ public class HLHHAlgo extends Algo {
 	 */
 	@Override
 	protected void processToday(HistoricalData hd, BookOfRecord bor) {
-		ZigZagRelative zz = new ZigZagRelative(hd, minPercent);
+		ZigZagRelative zz = new ZigZagRelative(hd, minPercent.get(0) * devBreath);
 
 		// Find last 2 high
 		if (zz.getHighs().size() < 2)
@@ -94,6 +84,6 @@ public class HLHHAlgo extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new HLHHAlgo();
+		return new HLHHTrackingShell2023();
 	}
 }

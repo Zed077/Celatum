@@ -1,11 +1,7 @@
 package com.celatum.algos;
 
 import com.celatum.BookOfRecord;
-import com.celatum.algos.entry.HigherHighs;
-import com.celatum.algos.entry.NoPositionOpen;
-import com.celatum.algos.entry.ReverseCondition;
-import com.celatum.algos.exit.DailyTrailingStop;
-import com.celatum.algos.exit.TightenStopWithAge;
+import com.celatum.algos.exit.TimedExit;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.data.SerieItem;
@@ -14,27 +10,26 @@ import com.celatum.maths.ZigZagRelative;
 import com.celatum.trading.LongOrder;
 
 public class HLHHTrackingAlgo extends Algo {
-	private double deviationPercent;
-	private double devBreath = 3;
-	private Serie adp70;
+	private Serie atr;
+	private Serie minPercent;
+	private int period = 200;
+	private double devBreath = 6;
+	
+	public HLHHTrackingAlgo() {
+		addAlgoComponent(new TimedExit(10));
+		
+		// HLHHTrackingShell2023-HH/ADP2004.5-NVMD/SDP5-OBB/202.5false--TE/10--RS/204.0--RSIT/70true--SFM/706.01.0 854 -53,619 20,547,114 21.91%
+	}
 
 	@Override
 	protected void setUp(HistoricalData hd, BookOfRecord bor) {
-		// ADP 70
-		adp70 = Calc.atrPercent(hd, minPeriods());
-		hd.syncReferenceIndex(adp70);
+		// ATR 20
+		atr = Calc.atr(hd, 20);
+		hd.syncReferenceIndex(atr);
 
-		// HLHHTrackingShell-HH/ADP704.0-NPO--DTS/SDP702.5 715 -132,727 2,340,298 15.8%
-		this.addAlgoComponent(new HigherHighs(HigherHighs.Method.ADP, 70, 4));
-		this.addAlgoComponent(new NoPositionOpen());
-		this.addAlgoComponent(new DailyTrailingStop(DailyTrailingStop.Method.SDP, 70, 2.5));
-		
-		//GenTestAlgo/HH/SDP2003.0/!HH/ADP2001.5/NPO 667 0.7998091818350355
-//		this.addAlgoComponent(new HigherHighs(HigherHighs.Method.SDP, 200, 3));
-//		this.addAlgoComponent(new ReverseCondition(new HigherHighs(HigherHighs.Method.SDP, 200, 1.5)));
-//		this.addAlgoComponent(new NoPositionOpen());
-//		
-//		this.addAlgoComponent(new TightenStopWithAge());
+		// ZigZag
+		minPercent = Calc.atrPercent(hd, period);
+		hd.syncReferenceIndex(minPercent);
 	}
 
 	@Override
@@ -48,15 +43,13 @@ public class HLHHTrackingAlgo extends Algo {
 	 */
 	@Override
 	protected void processToday(HistoricalData hd, BookOfRecord bor) {
-		deviationPercent = adp70.get(0);
+		ZigZagRelative zz = new ZigZagRelative(hd, minPercent.get(0) * devBreath);
 
-		ZigZagRelative zz = new ZigZagRelative(hd, deviationPercent*devBreath);
-		
-		if (zz.getHighs().size() < 2) {
+		// Find last 2 high
+		if (zz.getHighs().size() < 2)
 			return;
-		}
 
-		// Make sure we are after a high (and not a low)
+		// Make sure we are after HH
 		if (zz.getAll().get(0) <= zz.getAll().get(1))
 			return;
 
@@ -64,18 +57,16 @@ public class HLHHTrackingAlgo extends Algo {
 		SerieItem h1 = zz.getHighs().getItem(1);
 		SerieItem l = zz.getLows().getItem(0);
 
-		// Compute entry point
+		// Regress highs, offset to low
 		double entry = Calc.twoPointsRegression(h0, h1, l, hd.getReferenceDate());
-
-		// TODO: need to introduce a variant
 		
-		// Too far past entry point, likely to be a down trend
-//		if (hd.midClose.get(0) < entry*(1 - deviationPercent*0.1))
-//			return;
+		if (hd.midClose.get(0) < entry-atr.get(0)) 
+			return;
 
 		// Place order
-		LongOrder order = new LongOrder(hd.instrument, getGroup(), hd.getReferenceDate(), entry);
-		order.setStopCorrect(entry * (1 - deviationPercent * 0.1));
+		LongOrder order = new LongOrder(hd.instrument, getGroup(), hd.getReferenceDate(),
+				entry + atr.get(0) * 0.1);
+		order.setStop(entry - atr.get(0) * 2);
 		bor.addOrder(order);
 	}
 

@@ -210,6 +210,7 @@ public class IGConnector {
 					hd.bidHigh.put(day, bidHigh);
 					hd.bidLow.put(day, bidLow);
 					hd.volume.put(day, (double) volume);
+					hd.splitCoef.put(day, 1);
 				} catch (Exception e) {
 					System.out.println(arr.getJSONObject(i));
 					e.printStackTrace();
@@ -244,6 +245,11 @@ public class IGConnector {
 		}
 	}
 
+	/**
+	 * Add margin factors to the instrument
+	 * @param id
+	 * @throws Exception
+	 */
 	static void augmentInstrument(Instrument id) throws Exception {
 		System.out.print("augmentInstrument " + id.getName() + " ");
 

@@ -24,6 +24,7 @@ public abstract class Position {
 	private double closePrice;
 	private Date closeDate;
 	private double largestDrawdown;
+	private double splitCoef;
 	private static NumberFormat nf = NumberFormat.getInstance();
 	
 	static {
@@ -35,6 +36,7 @@ public abstract class Position {
 		this.entryPrice = entryPrice;
 		this.entryDate = hd.getReferenceDate();
 		this.histData = hd;
+		this.splitCoef = hd.splitCoef.get(0);
 	}
 
 	/**
@@ -173,7 +175,24 @@ public abstract class Position {
 
 	public abstract double getDeltaPrice();
 
-	public abstract double getCosts();
+	public double getCosts() {
+		// Used for US stocks. Minimum fee of 15 USD. Charged both ways
+		double commission = 0;
+		if (getInstrument().getCommission() > 0) {
+			commission = Math.max(getInstrument().getCommission() * this.getSize() / this.splitCoef * 2, 30);
+		}
+
+		// Used for other markets. Minimum fee of 10 EUR / GBP
+		double commissionPercent = 0;
+		if (getInstrument().getCommissionPercent() > 0) {
+			commissionPercent = Math.max(getEntryPrice() * getSize() * getInstrument().getCommissionPercent(), 10);
+			if (isClosed()) {
+				commissionPercent += Math.max(getClosePrice() * getSize() * getInstrument().getCommissionPercent(), 10);
+			}
+		}
+
+		return commission + commissionPercent;
+	}
 
 	public abstract double getMarginRequirement();
 

@@ -17,7 +17,7 @@ public class BookOfRecord {
 	private List<Order> orders = new LinkedList<Order>();
 	private List<Position> positions = new LinkedList<Position>();
 	public static final double CAPITAL = 250000;
-	public static final double ONE_MONTH_EUR_LIBOR = 0.104 / 100.0;
+	public static final double ONE_MONTH_EUR_LIBOR = 4.4 / 100.0;
 	public static final double ADMIN_FEE = 2.5 / 100.0;
 	public static final double DIVISOR = 360;
 	public double singlePositionRisk = 0.05; // 5%
@@ -329,12 +329,12 @@ public class BookOfRecord {
 //		System.out.println("Margin " + nform.format(currentMarginRequirement(referenceDate)));
 
 		// Value active positions
-		double returnAbsolute = absolutePnLToDate(referenceDate);
+		double returnAbsolute = returnAbsolute(referenceDate);
 		double returnPercent = returnPercent(referenceDate);
 		NumberFormat defaultFormat = NumberFormat.getPercentInstance();
 		defaultFormat.setMinimumFractionDigits(1);
 
-		res += "Value " + nform.format(returnAbsolute) + " Costs "
+		res += "PnL " + nform.format(returnAbsolute) + " inc. Costs "
 				+ nform.format(costsToDate(referenceDate)) + " Yearly Return " + defaultFormat.format(returnPercent) + "\n";
 
 		// Performance

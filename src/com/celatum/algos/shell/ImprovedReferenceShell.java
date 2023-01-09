@@ -23,11 +23,16 @@ public class ImprovedReferenceShell extends Algo {
 	
 
 	public ImprovedReferenceShell() {
-		// ImprovedReferenceShell-HH/ADP203.0-RT/700.2--DTS/ADP2004.0--EMAT/50 1524 -182,918 121,575,946 31.95%
-//		addAlgoComponent(new HigherHighs(Method.ADP, 20, 3));
-//		addAlgoComponent(new RegressionTrend(70, 0.2));
-//		addAlgoComponent(new DailyTrailingStop(com.celatum.algos.exit.DailyTrailingStop.Method.ADP, 200, 4));
-//		addAlgoComponent(new EMATippingStop(50));
+		// ImprovedReferenceShell-HH/ADP203.0-RT/700.2--DTS/ADP2004.0--EMAT/50 1537 -187,709 115,338,955 31.64%
+		addAlgoComponent(new HigherHighs(Method.ADP, 20, 3));
+		addAlgoComponent(new RegressionTrend(70, 0.2));
+		addAlgoComponent(new DailyTrailingStop(com.celatum.algos.exit.DailyTrailingStop.Method.ADP, 200, 4));
+		addAlgoComponent(new EMATippingStop(50));
+		
+		// ImprovedReferenceShell-!HH/SDP703.0-EMAC/50200-ST/10EMA-SMAD/2002.0--TE/20--RS/202.5--EDS/702.01.0--TSEMA/SDP203.5 345 -160,045 9,329,169 17.76%
+		// ImprovedReferenceShell-!HH/ADP204.5-NVMD/SDP5--DTS/ADP2004.0--TSEMA/SDP704.0--RTS/500.05--EDS/700.01.0 1326 -236,092 46,760,223 26.37%
+		// ImprovedReferenceShell-HH/ADP203.0-RT/700.2-HH/ADP701.5-!EMAD/5-1.0-ST/7EMA-OBB/202.0false--DTS/ADP2004.0--EMAT/50--RTS/500.1 523 -130,869 167,383,824 33.89%
+
 		
 		// ImprovedReferenceShell 376 -242,499 139,689 2%
 		

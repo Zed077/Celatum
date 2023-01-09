@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
 import com.celatum.data.Serie;
@@ -22,6 +23,8 @@ class SuperTrendTest {
 
 	@BeforeEach
 	void setUp() throws Exception {
+		DataAccessOrchestrator.init();
+		
 		Serie high = new Serie();
 		Serie low = new Serie();
 		Serie close = new Serie();
@@ -165,7 +168,7 @@ class SuperTrendTest {
 		low.put(d, 1772.6);
 		close.put(d, 1773);
 
-		hd = HistoricalData.getEmptyHistoricalData(Instrument.getInstrumentByName("IX.D.SPTRD.DAILY.IP"), Source.IG_EPIC);
+		hd = HistoricalData.getEmptyHistoricalData(Instrument.getInstrumentByCode("IX.D.SPTRD.IFM.IP"), Source.IG_EPIC);
 		hd.midHigh = high;
 		hd.midClose = close;
 		hd.midLow = low;

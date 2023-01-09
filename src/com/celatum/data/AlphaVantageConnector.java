@@ -45,7 +45,7 @@ public class AlphaVantageConnector {
 	 * @param hd
 	 * @throws Exception
 	 */
-	public static void getHistoricalPrices(HistoricalData hd, boolean full) throws Exception {
+	public static void loadHistoricalPrices(HistoricalData hd, boolean full) throws Exception {
 		System.out.print("AV getHistoricalPrices " + hd.instrument.getName() + " ");
 
 		String outputSize = (full) ? "full" : "compact";
@@ -54,7 +54,7 @@ public class AlphaVantageConnector {
 		URL url = new URL("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol="
 				+ hd.instrument.getCode(Source.AV_CODE) + "&outputsize=" + outputSize + "&apikey=" + API_KEY);
 		HttpURLConnection conn = createConnection(url);
-		System.out.println(conn.getResponseCode() + " " + conn.getResponseMessage());
+		System.out.print(conn.getResponseCode() + " " + conn.getResponseMessage());
 
 		// Process data
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
@@ -82,21 +82,18 @@ public class AlphaVantageConnector {
 				
 				// Init
 				JSONObject d = arr.getJSONObject(timestamp);
-				double spread = DataAccessOrchestrator.getInstrumentStatistics(hd.instrument).getBidAskSpreadPercent()/2.0;
-				
-				// Volume
-				int volume = d.getInt("6. volume");
+				double spread = hd.instrument.getSpreadPoints()/2.0;
 
 				// Prices
-				double askOpen = d.getDouble("1. open") * (1 + spread) / splitCoefficient;
-				double askClose = d.getDouble("4. close") * (1 + spread) / splitCoefficient;
-				double askHigh = d.getDouble("2. high") * (1 + spread) / splitCoefficient;
-				double askLow = d.getDouble("3. low") * (1 + spread) / splitCoefficient;
+				double askOpen = (d.getDouble("1. open") + spread) / splitCoefficient;
+				double askHigh = (d.getDouble("2. high") + spread) / splitCoefficient;
+				double askLow = (d.getDouble("3. low") + spread) / splitCoefficient;
+				double askClose = (d.getDouble("4. close") + spread) / splitCoefficient;
 
-				double bidOpen = d.getDouble("1. open") * (1 - spread) / splitCoefficient;
-				double bidClose = d.getDouble("4. close") * (1 - spread) / splitCoefficient;
-				double bidHigh = d.getDouble("2. high") * (1 - spread) / splitCoefficient;
-				double bidLow = d.getDouble("3. low") * (1 - spread) / splitCoefficient;
+				double bidOpen = (d.getDouble("1. open") - spread) / splitCoefficient;
+				double bidHigh = (d.getDouble("2. high") - spread) / splitCoefficient;
+				double bidLow = (d.getDouble("3. low") - spread) / splitCoefficient;
+				double bidClose = (d.getDouble("4. close") - spread) / splitCoefficient;
 
 				hd.askOpen.put(day, askOpen);
 				hd.askClose.put(day, askClose);
@@ -106,13 +103,24 @@ public class AlphaVantageConnector {
 				hd.bidClose.put(day, bidClose);
 				hd.bidHigh.put(day, bidHigh);
 				hd.bidLow.put(day, bidLow);
-				// TODO should we not also divide the volume by the split coefficient?
-				hd.volume.put(day, (double) volume);
+
+				// Volume
+				double volume = Math.round( ((double) d.getInt("6. volume")) * splitCoefficient );
+				hd.volume.put(day, volume);
 
 				// Split coefficient for the next record
+				hd.splitCoef.put(day, splitCoefficient);
 				double newSplit = d.getDouble("8. split coefficient");
-				splitCoefficient = splitCoefficient * newSplit;
+				splitCoefficient = Math.round(splitCoefficient * newSplit);
 			}
+			
+			if (splitCoefficient != 1 && !full) {
+				System.out.println(" stock split, reloading full history");
+				hd.empty();
+				loadHistoricalPrices(hd, true);
+			}
+			
+			System.out.println(" to " + hd.askClose.newestDate());
 		} catch (Exception e) {
 			throw e;
 		} finally {

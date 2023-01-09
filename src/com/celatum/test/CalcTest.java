@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
 import com.celatum.data.Instrument.Source;
@@ -22,6 +23,8 @@ class CalcTest {
 
 	@BeforeEach
 	void setUp() throws Exception {
+		DataAccessOrchestrator.init();
+		
 		serie = new Serie();
 
 		gc.set(2020 - 1900, 0, 1);
@@ -318,7 +321,7 @@ class CalcTest {
 		close.put(gc.getTime(), 50.23);
 
 		HistoricalData hd = HistoricalData
-				.getEmptyHistoricalData(Instrument.getInstrumentByName("IX.D.SPTRD.DAILY.IP"), Source.IG_EPIC);
+				.getEmptyHistoricalData(Instrument.getInstrumentByCode("UD.D.TSLA.CASH.IP"), Source.IG_EPIC);
 		hd.midHigh = high;
 		hd.midClose = close;
 		hd.midLow = low;

@@ -1,7 +1,7 @@
 package com.celatum.data;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -19,9 +19,9 @@ public class DataAccessOrchestrator {
 
 	public static final String LIVE_WATCHLIST = "live";
 	public static final String TEST_WATCHLIST = "test";
-	public static final String STOCK_WATCHLIST = "stocks";
+	public static final String STOCK_TRAIN_WATCHLIST = "stocksTrain";
+	public static final String STOCK_LIVE_WATCHLIST = "stocksLive";
 	private static final int INSTRUMENT_UPDATE_TIME = 14; // in days
-	private static final int INSTRUMENT_LOOKBACK_TIME = 35; // in days
 	private static TreeMap<String, List<Instrument>> watchlists;
 	private static int counter = 0;
 
@@ -33,8 +33,8 @@ public class DataAccessOrchestrator {
 		return getWatchlist(TEST_WATCHLIST);
 	}
 
-	public static List<Instrument> getStockWatchlist() {
-		return getWatchlist(STOCK_WATCHLIST);
+	public static List<Instrument> getStockTrainWatchlist() {
+		return getWatchlist(STOCK_TRAIN_WATCHLIST);
 	}
 
 	static {
@@ -46,34 +46,34 @@ public class DataAccessOrchestrator {
 		}
 
 		// Watchlists
-		if (watchlists == null) {
-			try {
-				IGConnector.connect(IGCredentials.CH_Credentials);
+		try {
+			IGConnector.connect(IGCredentials.CH_Credentials);
 
-				// Get all watchlists
-				List<WatchlistData> ws = IGConnector.getWatchlists();
-				watchlists = new TreeMap<>();
-				for (WatchlistData w : ws) {
-					// Get all instruments
-					if (w.isEditable()) {
-						List<Instrument> is = IGConnector.getWatchlistById(w.getId());
-						watchlists.put(w.getName(), is);
-					}
+			// Get all watchlists
+			List<WatchlistData> ws = IGConnector.getWatchlists();
+			watchlists = new TreeMap<>();
+			for (WatchlistData w : ws) {
+				// Get all instruments
+				if (w.isEditable()) {
+					List<Instrument> is = IGConnector.getWatchlistById(w.getId());
+					watchlists.put(w.getName(), is);
 				}
-
-				// Augment the instruments
-				for (Instrument i : Instrument.getInstrumentCache().values()) {
-					if (i.marginFactor == null) {
-						IGConnector.augmentInstrument(i);
-					}
-				}
-
-				DatabaseConnector.saveInstruments(Instrument.getInstrumentCache().values());
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				System.exit(-1);
 			}
+
+			// Augment the instruments
+			for (Instrument i : Instrument.getInstrumentCache().values()) {
+				if (i.marginFactor == null) {
+					IGConnector.augmentInstrument(i);
+				}
+			}
+
+			DatabaseConnector.saveInstruments(Instrument.getInstrumentCache().values());
+			
+			refreshInstrumentStatistics();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(-1);
 		}
 	}
 	
@@ -91,64 +91,48 @@ public class DataAccessOrchestrator {
 		return Instrument.getInstrumentCache();
 	}
 	
-	public static void refreshInstrumentStatistics() {
+	private static void refreshInstrumentStatistics() throws IOException, InterruptedException {
+		// Create instrument statistics placeholders in the database
+		Collection<Instrument> instruments = getInstruments().values();
+
 		// Only refresh weekly
-		Collection<Instrument> instruments = DataAccessOrchestrator.getInstruments().values();
 		Date today = new Date();
 		GregorianCalendar gc = new GregorianCalendar();
 
+		// Get account size from IG CH
+		IGConnector.connect(IGCredentials.CH_Credentials);
+
 		// Generate the sizing figures
 		for (Instrument inst : instruments) {
-			// Only update every week
-			Date instDate = inst.getLastUpdated();
-			if (instDate == null) {
-				instDate = new Date(0);
-			}
-			gc.setTime(instDate);
-			gc.add(GregorianCalendar.DAY_OF_MONTH, INSTRUMENT_UPDATE_TIME);
-			Date updateDate = gc.getTime();
+			try {
+				// Only update every week
+				Date instDate = inst.getLastUpdated();
+				if (instDate == null) {
+					instDate = new Date(0);
+				}
+				gc.setTime(instDate);
+				gc.add(GregorianCalendar.DAY_OF_MONTH, INSTRUMENT_UPDATE_TIME);
+				Date updateDate = gc.getTime();
 
-			if (today.after(updateDate)) {
-				// History to be used to compute the stats
-				HistoricalData hd = null;
+				if (today.after(updateDate)) {
+					DatabaseConnector.createInstrumentStatisticsShell(inst);
+					
+					// History to be used to compute the stats
+					HistoricalData hd = new HistoricalData(inst, Source.AV_CODE);
 
-				try {
-					// Check if we already have some historical records
-					Date lastDate = DatabaseConnector.getLastUpdatedDate(inst, Source.IG_EPIC);
-					if (lastDate != null) {
-						refreshSavedHistories();
-						hd = new HistoricalData(inst, Source.IG_EPIC);
-						DatabaseConnector.getHistoricalData(hd);
-						hd.initialiseData();
-					} else if (inst.isIGDataAvailable()) {
-						// Take date over a period of 3 months
-						Calendar calendar = Calendar.getInstance();
-						calendar.add(Calendar.DAY_OF_MONTH, -INSTRUMENT_LOOKBACK_TIME);
-						Date startDate = calendar.getTime();
-
-						hd = new HistoricalData(inst, Source.IG_EPIC);
-						IGConnector.connect(IGCredentials.UK_Credentials);
-						IGConnector.getHistoricalPrices(hd, startDate);
-						hd.initialiseData();
-					} else if (!inst.getCode(Source.AV_CODE).equals("null")) {
-						saveHistory(inst);
-						hd = new HistoricalData(inst, Source.AV_CODE);
-						DatabaseConnector.getHistoricalData(hd);
-						hd.initialiseData();
-					}
-
-					if (hd == null)
-						continue;
+					// Get short term historical data from AV
+					AlphaVantageConnector.loadHistoricalPrices(hd, false);
+					hd.initialiseData();
 					InstrumentStats is = new InstrumentStats(hd);
 					DatabaseConnector.saveInstrumentStatistics(is);
-				} catch (Exception e) {
-					System.err.println("Could not compute stats for " + inst.getName());
-					e.printStackTrace();
 				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	/**
 	 * Stats from IG
 	 * @param insts
@@ -207,21 +191,30 @@ public class DataAccessOrchestrator {
 		return null;
 	}
 
+	public static List<HistoricalData> getHistoricalData(Collection<Instrument> instruments, Source s) {
+		List<HistoricalData> histories = new ArrayList<HistoricalData>();
+		for (Instrument id : instruments) {
+			HistoricalData hd = DataAccessOrchestrator.getHistoricalData(id, s);
+			histories.add(hd);
+		}
+		return histories;
+	}
+
 	public static void refreshSavedHistories() {
 		// Get saved history codes
-		Collection<HistoricalData> savedCodes = null;
+		Collection<HistoricalData> savedHistories = null;
 		try {
-			savedCodes = DatabaseConnector.getSavedCodes();
+			savedHistories = DatabaseConnector.getSavedHistories();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
 
-		for (HistoricalData hd : savedCodes) {
+		for (HistoricalData hd : savedHistories) {
 			Source s = hd.getSource();
 			Instrument i = hd.instrument;
 			try {
-				// Get penultimate recorded date from DB
+				// Get penultimate recorded date from DB.
 				Date startDate = DatabaseConnector.getLastUpdatedDate(i, s);
 
 				// Get data from relevant source
@@ -233,7 +226,7 @@ public class DataAccessOrchestrator {
 					break;
 				case AV_CODE:
 					double days = TimeUnit.DAYS.convert(new Date().getTime() - startDate.getTime(), TimeUnit.MILLISECONDS);
-					AlphaVantageConnector.getHistoricalPrices(hd, days > 100);
+					AlphaVantageConnector.loadHistoricalPrices(hd, days > 100);
 					break;
 				default:
 					break;
@@ -249,12 +242,12 @@ public class DataAccessOrchestrator {
 		}
 	}
 
-	public static boolean refreshHistories(Collection<Instrument> instruments, Source s) {
+	public static boolean saveHistories(Collection<Instrument> instruments, Source s) {
 		boolean allUpdated = true;
 		for (Instrument inst : instruments) {
 			HistoricalData hd = new HistoricalData(inst, s);
 			try {
-				// Get penultimate recorded date from DB
+				// Get penultimate recorded date from DB. Can be null
 				Date startDate = DatabaseConnector.getLastUpdatedDate(inst, s);
 
 				// Get data from relevant source
@@ -265,8 +258,11 @@ public class DataAccessOrchestrator {
 					IGConnector.getHistoricalPrices(hd, startDate);
 					break;
 				case AV_CODE:
-					double days = TimeUnit.DAYS.convert(new Date().getTime() - startDate.getTime(), TimeUnit.MILLISECONDS);
-					AlphaVantageConnector.getHistoricalPrices(hd, days > 100);
+					double days = 5500;
+					if (startDate != null) {
+						days = TimeUnit.DAYS.convert(new Date().getTime() - startDate.getTime(), TimeUnit.MILLISECONDS);
+					}
+					AlphaVantageConnector.loadHistoricalPrices(hd, days > 100);
 					break;
 				default:
 					break;
@@ -284,7 +280,7 @@ public class DataAccessOrchestrator {
 		return allUpdated;
 	}
 	
-	public static void saveHistory(Instrument instrument) {
+	public static void saveHistories(Instrument instrument) {
 		// IG
 		try {
 			if (DatabaseConnector.getLastUpdatedDate(instrument, Source.IG_EPIC) == null) {
@@ -302,7 +298,7 @@ public class DataAccessOrchestrator {
 		try {
 			if (DatabaseConnector.getLastUpdatedDate(instrument, Source.AV_CODE) == null) {
 				HistoricalData avHist = new HistoricalData(instrument, Source.AV_CODE);
-				AlphaVantageConnector.getHistoricalPrices(avHist, true);
+				AlphaVantageConnector.loadHistoricalPrices(avHist, true);
 				DatabaseConnector.updateHistoricalData(avHist);
 			}
 		} catch (Exception e) {

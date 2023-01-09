@@ -1,5 +1,6 @@
 package com.celatum.test;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -9,6 +10,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.celatum.data.DataAccessOrchestrator;
+import com.celatum.data.HistoricalData;
+import com.celatum.data.Instrument;
+import com.celatum.data.Instrument.Source;
 import com.celatum.data.Serie;
 import com.celatum.data.SerieItem;
 
@@ -114,6 +119,24 @@ class SerieTest {
 		assertEquals(200, max.getValue());
 		max = serie.getMaxSince(gc.getTime(), 1);
 		assertEquals(100, max.getValue());
+	}
+	
+	@Test
+	void head() {
+		DataAccessOrchestrator.init();
+		Instrument inst = Instrument.getInstrumentByCode("AMZN");
+		HistoricalData hd = DataAccessOrchestrator.getHistoricalData(inst, Source.AV_CODE);
+		
+		int nCandles = 240;
+		
+		assertTrue(hd.fullSize() > nCandles);
+		assertEquals(hd.fullSize(), hd.size());
+		
+		hd.head(nCandles);
+		assertEquals(hd.fullSize(), nCandles);
+		assertEquals(hd.size(), nCandles);
+		assertEquals(hd.volume.size(), nCandles);
+		assertEquals(hd.volume.fullSize(), nCandles);
 	}
 
 }

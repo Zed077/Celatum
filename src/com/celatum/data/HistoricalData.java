@@ -19,6 +19,7 @@ public class HistoricalData implements Cloneable {
 	public Serie bidOpen = new Serie();
 	public Serie bidClose = new Serie();
 	public Serie volume = new Serie();
+	public Serie splitCoef = new Serie();
 	public Serie midHigh;
 	public Serie midLow;
 	public Serie midOpen;
@@ -43,7 +44,7 @@ public class HistoricalData implements Cloneable {
 		this.source = s;
 	}
 	
-	public static HistoricalData getEmptyHistoricalData (Instrument instrument, Source s) {
+	public static HistoricalData getEmptyHistoricalData(Instrument instrument, Source s) {
 		return new HistoricalData(instrument, s);
 	}
 
@@ -67,10 +68,36 @@ public class HistoricalData implements Cloneable {
 		syncReferenceIndex(bidOpen);
 		syncReferenceIndex(bidClose);
 		syncReferenceIndex(volume);
+		syncReferenceIndex(splitCoef);
 		syncReferenceIndex(midHigh);
 		syncReferenceIndex(midLow);
 		syncReferenceIndex(midOpen);
 		syncReferenceIndex(midClose);
+	}
+	
+	/**
+	 * Retain only the last nCandles of history
+	 * @param nCandles
+	 */
+	public void head(int nCandles) {
+		askOpen.head(nCandles);
+		askHigh.head(nCandles);
+		askLow.head(nCandles);
+		askClose.head(nCandles);
+		
+		bidOpen.head(nCandles);
+		bidHigh.head(nCandles);
+		bidLow.head(nCandles);
+		bidClose.head(nCandles);
+		
+		midOpen.head(nCandles);
+		midHigh.head(nCandles);
+		midLow.head(nCandles);
+		midClose.head(nCandles);
+		
+		volume.head(nCandles);
+		splitCoef.head(nCandles);
+		this.dates = askHigh.getAllDates();
 	}
 
 	/**
@@ -101,6 +128,7 @@ public class HistoricalData implements Cloneable {
 		bidOpen = new Serie();
 		bidClose = new Serie();
 		volume = new Serie();
+		splitCoef = new Serie();
 	}
 
 	public void println() {
@@ -146,6 +174,7 @@ public class HistoricalData implements Cloneable {
 		clone.bidOpen = (Serie) this.bidOpen.clone();
 		clone.bidClose = (Serie) this.bidClose.clone();
 		clone.volume = (Serie) this.volume.clone();
+		clone.splitCoef = (Serie) this.splitCoef.clone();
 		clone.midHigh = (Serie) this.midHigh.clone();
 		clone.midLow = (Serie) this.midLow.clone();
 		clone.midOpen = (Serie) this.midOpen.clone();
@@ -163,6 +192,7 @@ public class HistoricalData implements Cloneable {
 		clone.syncReferenceIndex(clone.bidOpen);
 		clone.syncReferenceIndex(clone.bidClose);
 		clone.syncReferenceIndex(clone.volume);
+		clone.syncReferenceIndex(clone.splitCoef);
 		clone.syncReferenceIndex(clone.midHigh);
 		clone.syncReferenceIndex(clone.midLow);
 		clone.syncReferenceIndex(clone.midOpen);

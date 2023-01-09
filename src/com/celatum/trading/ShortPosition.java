@@ -71,16 +71,20 @@ public class ShortPosition extends Position {
 
 	@Override
 	public double getCosts() {
+		// Overnight costs
+		double overnightcosts;
 		if (isClosed()) {
 			double dayDelta = (this.getCloseDate().getTime() - this.getEntryDate().getTime()) / 1000 / 60 / 60 / 24;
-			return Math.max(this.getClosePrice(), this.getEntryPrice()) * getSize()
+			overnightcosts = Math.max(this.getClosePrice(), this.getEntryPrice()) * getSize()
 					* (BookOfRecord.ADMIN_FEE - BookOfRecord.ONE_MONTH_EUR_LIBOR) / BookOfRecord.DIVISOR * dayDelta;
 		} else {
-			double dayDelta = (histData.getReferenceDate().getTime() - this.getEntryDate().getTime()) / 1000 / 60 / 60 / 24;
-			return Math.max(histData.askClose.get(0), this.getEntryPrice()) * getSize()
+			double dayDelta = (histData.getReferenceDate().getTime() - this.getEntryDate().getTime()) / 1000 / 60 / 60
+					/ 24;
+			overnightcosts = Math.max(histData.askClose.get(0), this.getEntryPrice()) * getSize()
 					* (BookOfRecord.ADMIN_FEE - BookOfRecord.ONE_MONTH_EUR_LIBOR) / BookOfRecord.DIVISOR * dayDelta;
 		}
-		
+
+		return super.getCosts() + overnightcosts;
 	}
 
 	@Override

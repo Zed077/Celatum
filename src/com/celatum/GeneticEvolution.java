@@ -243,6 +243,8 @@ public class GeneticEvolution {
 		for (AlgoRunner ar : population) {
 			if (ar.getnPositions() <= histories.size() * minPositions) {
 				remove.add(ar);
+			} else if (Double.isNaN(ar.RoI)) {
+				remove.add(ar);
 			}
 		}
 		population.removeAll(remove);

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonIgnoreProperties({ "instrumentCode", "stopLossDistancePercent", "maxLossPercent", "maxContractsStd", "minContractsStd",
-		"atrPercent", "maxNotionalStd", "maxNotionalATR", "contractSize", "accountSize"})
+		"atrPercent", "maxNotionalStd", "maxNotionalATR", "contractSize", "accountSize", "bidAskSpreadPoints", "commission"})
 @JsonPropertyOrder({ "instrumentName", "minContractsATR", "maxContractsATR", "stopDistanceATR", "latestPrice" })
 public class InstrumentStats {
 	private String instrumentName;
@@ -24,11 +24,10 @@ public class InstrumentStats {
 	private double accountSize;
 	private double latestPrice;
 	private double stopDistanceATR;
-	private double bidAskSpreadPercent; // Distance between the bid and ask in percent
 
 	InstrumentStats(HistoricalData hd) {
 		hd.resetReferenceIndex();
-		latestPrice = hd.midClose.get(0) / hd.instrument.getIGUKMultiplier();
+		latestPrice = hd.midClose.get(0);
 		accountSize = IGConnector.getAccountBalance();
 
 		maxNotionalStd = accountSize * maxLossPercent / stopLossDistancePercent;
@@ -46,8 +45,6 @@ public class InstrumentStats {
 
 		instrumentName = hd.instrument.getName();
 		instrumentCode = hd.getCode();
-		
-		bidAskSpreadPercent = (hd.askClose.get(0) - hd.bidClose.get(0)) / hd.midClose.get(0);
 	}
 	
 	/**
@@ -61,7 +58,7 @@ public class InstrumentStats {
 	 * @param stopDistanceATR
 	 */
 	InstrumentStats(String instrumentName, String instrumentCode, double maxContractsATR, double minContractsATR,
-			double accountSize, double latestPrice, double stopDistanceATR, double bidAskSpreadPercent) {
+			double accountSize, double latestPrice, double stopDistanceATR) {
 		this.instrumentName = instrumentName;
 		this.instrumentCode = instrumentCode;
 		this.maxContractsATR = maxContractsATR;
@@ -69,7 +66,6 @@ public class InstrumentStats {
 		this.accountSize = accountSize;
 		this.latestPrice = latestPrice;
 		this.stopDistanceATR = stopDistanceATR;
-		this.bidAskSpreadPercent = bidAskSpreadPercent;
 	}
 
 	private static double round(double value, int precision) {
@@ -134,9 +130,5 @@ public class InstrumentStats {
 
 	public String getInstrumentCode() {
 		return instrumentCode;
-	}
-
-	public double getBidAskSpreadPercent() {
-		return bidAskSpreadPercent;
 	}
 }

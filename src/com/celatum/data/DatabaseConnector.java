@@ -75,12 +75,12 @@ public class DatabaseConnector {
 		Statement statement = connection.createStatement();
 
 		ResultSet resultSet = statement.executeQuery("SELECT * FROM historicaldata WHERE code='" + hd.getCode()
-				+ "' AND source='" + hd.getSource() + "'ORDER BY day ASC");
+				+ "' AND source='" + hd.getSource() + "' ORDER BY day ASC");
 
 		while (resultSet.next()) {
 			Date day = resultSet.getDate("day");
 
-			int volume = resultSet.getInt("volume");
+			long volume = resultSet.getLong("volume");
 			double askHigh = resultSet.getDouble("askhigh");
 			double askLow = resultSet.getDouble("asklow");
 			double askOpen = resultSet.getDouble("askopen");
@@ -89,6 +89,7 @@ public class DatabaseConnector {
 			double bidLow = resultSet.getDouble("bidlow");
 			double bidOpen = resultSet.getDouble("bidopen");
 			double bidClose = resultSet.getDouble("bidclose");
+			int splitCoef = resultSet.getInt("split_coef");
 
 			hd.askOpen.put(day, askOpen);
 			hd.askClose.put(day, askClose);
@@ -99,11 +100,26 @@ public class DatabaseConnector {
 			hd.bidHigh.put(day, bidHigh);
 			hd.bidLow.put(day, bidLow);
 			hd.volume.put(day, (double) volume);
+			hd.splitCoef.put(day, splitCoef);
 		}
 		
-		combineSatSun(hd);
+		// Validation
+		if (hd.getSource() == Source.IG_CHART_CODE) {
+			combineSatSun(hd);
+		} else if (hd.getSource() == Source.AV_CODE) {
+//			double ask = hd.askClose.get(hd.askClose.oldestDate());
+//			double bid = hd.bidClose.get(hd.askClose.oldestDate());
+//			if (ask - bid != hd.instrument.getSpreadPoints()) {
+//				throw new RuntimeException("Need to reload AV history for " + hd.instrument.getName() + " as spread ("
+//						+ hd.instrument.getSpreadPoints() + ") does not match data (" + (ask - bid) + ")");
+//			}
+		}
 	}
 
+	/**
+	 * For IG data only
+	 * @param hd
+	 */
 	private static void combineSatSun(HistoricalData hd) {
 		// Go through in ascending order
 		Date[] dates = hd.askClose.getAllDates();
@@ -136,6 +152,7 @@ public class DatabaseConnector {
 				hd.bidLow.remove(day);
 				hd.bidOpen.remove(day);
 				hd.volume.remove(day);
+				hd.splitCoef.remove(day);
 				i++; // no need to process the Monday
 			}
 			// US500 data does not have Fridays...
@@ -174,10 +191,15 @@ public class DatabaseConnector {
 		try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/Celatum", "postgres",
 				"Abacus2020")) {
 			for (Instrument inst : instruments) {
+				String AVCode = inst.getCode(Source.AV_CODE);
+				if (AVCode == null) {
+					AVCode = inst.getCode(Source.IG_CHART_CODE);
+				}
+				
 				Statement statement = connection.createStatement();
 				String query = "INSERT INTO public.instruments VALUES ('" + inst.getCode(Source.IG_EPIC) + "', '" + inst.getName() + "', '"
 						+ inst.getExpiry() + "', '" + inst.getType() + "', '" + inst.getCode(Source.IG_CHART_CODE) + "', '"
-						+ inst.getCode(Source.IG_NEWS_CODE) + "', '" + inst.getCode(Source.AV_CODE) + "', '" + inst.isIGDataAvailable() + "', '"
+						+ inst.getCode(Source.IG_NEWS_CODE) + "', '" + AVCode + "', '" + inst.isIGDataAvailable() + "', '"
 						+ inst.getIGUKMultiplier() + "', '" + inst.marginFactor.getContractSize() + "', '"
 						+ inst.marginFactor.getUnit() + "', '" + inst.marginFactor.getMaxPositionSize() + "', '"
 						+ inst.marginFactor.getDepositFactorPercent() + "', '"
@@ -191,22 +213,14 @@ public class DatabaseConnector {
 			throw e;
 		}
 	}
-	
+
 	public static void saveInstrumentStatistics(InstrumentStats stats) throws ClassNotFoundException, SQLException {
-		// Delete existing field if it exists
 		Statement statement = connection.createStatement();
-		String query = "DELETE FROM public.instrumentstatistics WHERE instrument_code='"
-				+ stats.getInstrumentCode() + "')";
-		statement.executeUpdate(query);
-		
 		// Save new values
-		query = "INSERT INTO public.instrumentstatistics VALUES ('"
-				+ stats.getInstrumentCode() + "', '"
-				+ stats.getMinContractsATR() + "', '" 
-				+ stats.getMaxContractsATR() + "', '"
-				+ stats.getStopDistanceATR() + "', '"
-				+ stats.getLatestPrice() + "', '"
-				+ stats.getBidAskSpreadPercent() + "')";
+		String query = "UPDATE public.instrumentstatistics SET min_contracts_atr='" + stats.getMinContractsATR()
+				+ "', max_contracts_atr='" + stats.getMaxContractsATR() + "', stop_distance_atr='"
+				+ stats.getStopDistanceATR() + "', latest_price='" + stats.getLatestPrice() + "', account_size='"
+				+ stats.getAccountSize() + "' WHERE instrument_name='" + stats.getInstrumentName() + "'";
 //		System.out.println(query);
 		statement.executeUpdate(query);
 		
@@ -217,6 +231,18 @@ public class DatabaseConnector {
 		statement.executeUpdate(query);
 		Instrument inst = Instrument.getInstrumentByName(stats.getInstrumentName());
 		inst.setLastUpdated(now);
+	}
+	
+	public static void createInstrumentStatisticsShell(Instrument inst) throws ClassNotFoundException, SQLException {
+		// Delete existing field if it exists
+		Statement statement = connection.createStatement();
+				
+		// Save new values
+		String query = "INSERT INTO public.instrumentstatistics VALUES ('"
+				+ inst.getName() + "')"
+				+ "ON CONFLICT (instrument_name) DO NOTHING";
+//		System.out.println(query);
+		statement.executeUpdate(query);
 	}
 	
 	public static InstrumentStats getInstrumentStatistics(Instrument inst, Source s) throws SQLException, ClassNotFoundException {
@@ -234,8 +260,8 @@ public class DatabaseConnector {
 			double accountSize = resultSet.getDouble("account_size");
 			double latestPrice = resultSet.getDouble("latest_price");
 			double stopDistanceATR = resultSet.getDouble("stop_distance_atr");
-			double bidAskSpreadPercent = resultSet.getDouble("bid_ask_spread_percent");
-			stats = new InstrumentStats(instrumentName, instrumentCode, maxContractsATR, minContractsATR, accountSize, latestPrice, stopDistanceATR, bidAskSpreadPercent);
+			stats = new InstrumentStats(instrumentName, instrumentCode, maxContractsATR, minContractsATR, accountSize,
+					latestPrice, stopDistanceATR);
 		}
 		return stats;
 	}
@@ -264,7 +290,7 @@ public class DatabaseConnector {
 	 * @throws SQLException
 	 * @throws ClassNotFoundException
 	 */
-	public static Collection<HistoricalData> getSavedCodes() throws SQLException, ClassNotFoundException {
+	public static Collection<HistoricalData> getSavedHistories() throws SQLException, ClassNotFoundException {
 		Statement statement = connection.createStatement();
 
 		ResultSet resultSet = statement.executeQuery("SELECT DISTINCT code, source FROM public.historicaldata");
@@ -436,6 +462,10 @@ public class DatabaseConnector {
 			inst.setIGDataAvailable(resultSet.getBoolean("ig_data_available"));
 			inst.setIGUKMultiplier(resultSet.getInt("ig_uk_multiplier"));
 			inst.setCode(Source.AV_CODE, resultSet.getString("av_code"));
+			inst.setLastUpdated(resultSet.getDate("stats_last_updated"));
+			inst.setSpreadPoints(resultSet.getDouble("spread_points"));
+			inst.setCommission(resultSet.getDouble("commission"));
+			inst.setCommissionPercent(resultSet.getDouble("commission_percent"));
 
 			double maxPositionSize = resultSet.getDouble("maxPositionSize");
 			double depositFactorPercent = resultSet.getDouble("depositFactorPercent");
@@ -466,11 +496,12 @@ public class DatabaseConnector {
 
 		// Insert new records
 		for (int i = 0; i < hd.size(); i++) {
-			String sql = "INSERT INTO historicaldata (code, day, askhigh, asklow, askopen, askclose, bidhigh, bidlow, bidopen, bidclose, volume, source) VALUES ('"
+			String sql = "INSERT INTO historicaldata (code, day, askhigh, asklow, askopen, askclose, bidhigh, bidlow, bidopen, bidclose, volume, split_coef, source) VALUES ('"
 					+ code + "', '" + PGDATEFORMAT.format(hd.askClose.getDate(i)) + "'::date, "
 					+ hd.askHigh.get(i) + ", " + hd.askLow.get(i) + ", " + hd.askOpen.get(i) + ", "
 					+ hd.askClose.get(i) + ", " + hd.bidHigh.get(i) + ", " + hd.bidLow.get(i) + ", "
-					+ hd.bidOpen.get(i) + ", " + hd.bidClose.get(i) + ", " + hd.volume.get(i) + ", '" + hd.getSource( ) +"')";
+					+ hd.bidOpen.get(i) + ", " + hd.bidClose.get(i) + ", " + String.format("%.0f", hd.volume.get(i)) + ", " 
+					+ (int) hd.splitCoef.get(i) + ", '" + hd.getSource( ) +"')";
 			
 			try {
 				statement.executeUpdate(sql);

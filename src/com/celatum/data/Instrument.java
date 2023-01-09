@@ -24,6 +24,9 @@ public class Instrument implements Comparable<Instrument> {
 	private int ig_uk_multiplier = 1;
 	private Date lastUpdated;
 	public MarginFactorData marginFactor;
+	private double commission;
+	private double commissionPercent;
+	private double spreadPoints;
 
 	private Instrument(String name) {
 		this.name = name;
@@ -124,5 +127,29 @@ public class Instrument implements Comparable<Instrument> {
 	@Override
 	public int compareTo(Instrument o) {
 		return this.name.compareTo(o.name);
+	}
+
+	public double getCommission() {
+		return commission;
+	}
+
+	public void setCommission(double commission) {
+		this.commission = commission;
+	}
+
+	public double getSpreadPoints() {
+		return spreadPoints;
+	}
+
+	public void setSpreadPoints(double spreadPoints) {
+		this.spreadPoints = spreadPoints;
+	}
+
+	public double getCommissionPercent() {
+		return commissionPercent;
+	}
+
+	public void setCommissionPercent(double commissionPercent) {
+		this.commissionPercent = commissionPercent;
 	}
 }

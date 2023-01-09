@@ -113,7 +113,6 @@ public class TestServlet extends HttpServlet {
 	 * @throws Exception
 	 */
 	public void processSizing(HttpServletRequest request, HttpServletResponse response) {
-		DataAccessOrchestrator.refreshInstrumentStatistics();
 		try {
 			Collection<Instrument> instruments = DataAccessOrchestrator.getInstruments().values();
 			Collection<InstrumentStats> stats = DataAccessOrchestrator.getInstrumentStatistics(instruments);
