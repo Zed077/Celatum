@@ -122,6 +122,7 @@ public class AlphaVantageConnector {
 			
 			System.out.println(" to " + hd.askClose.newestDate());
 		} catch (Exception e) {
+			System.err.println(url.toString());
 			throw e;
 		} finally {
 			// Maximum 5 per minute

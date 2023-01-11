@@ -11,20 +11,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.celatum.algos.Algo;
+import com.celatum.algos.BasicShortAlgo;
 import com.celatum.algos.BouncePeriodLowAlgo;
 import com.celatum.algos.BreakoutLongAlgo;
 import com.celatum.algos.HLHHAlgo;
 import com.celatum.algos.HLHHAlgo200;
 import com.celatum.algos.HLHHTrackingAlgo;
 import com.celatum.algos.ImprovedReferenceAlgo3;
+import com.celatum.algos.LongMeanBounceAlgo;
+import com.celatum.algos.LongPeakAlgo;
 import com.celatum.algos.LongRegressionAlgo2023;
 import com.celatum.algos.SuperTrendLongAlgo;
-import com.celatum.algos.shell.HLHHShell2023;
-import com.celatum.algos.shell.HLHHTrackingShell;
-import com.celatum.algos.shell.HLHHTrackingShell2023;
-import com.celatum.algos.shell.ImprovedReferenceShell;
-import com.celatum.algos.shell.LowerLowShortShell3;
-import com.celatum.algos.shell.ShortATHShell;
+import com.celatum.algos.shell.*;
 import com.celatum.data.DataAccessOrchestrator;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
@@ -60,6 +58,7 @@ public class Main {
 		DataAccessOrchestrator.saveHistories(Instrument.getInstrumentByCode("RYRRX"));
 		DataAccessOrchestrator.saveHistories(Instrument.getInstrumentByCode("VCNIX"));
 		DataAccessOrchestrator.saveHistories(Instrument.getInstrumentByCode("RYDAX"));
+		DataAccessOrchestrator.saveHistories(Instrument.getInstrumentByCode("UNH"));
 	}
 
 	public static void main(String args[]) throws Exception {
@@ -79,20 +78,27 @@ public class Main {
 	}
 
 	private static void backTest() throws Exception {
-		List<Instrument> instruments = DataAccessOrchestrator.getStockTrainWatchlist();
+		List<Instrument> instruments = DataAccessOrchestrator.getWatchlist(DataAccessOrchestrator.STOCK_TRAIN_WATCHLIST);
 		Source s = Source.AV_CODE;
 		
 		// BESTs
-		evolveAlgo(new ShortATHShell(), instruments, s);
+		evolveAlgo(new LongMeanReversionShell(), instruments, s);
 
+//		runAlgoAggregate(new BasicShortAlgo(), instruments, s);
+//		runAlgoAggregate(new BasicShortShell(), instruments, s);
+//		runAlgoAggregate(new ShortHighShell(), instruments, s);
+//		runAlgoAggregate(new BreakoutShortShell(), instruments, s);
+//		runAlgoAggregate(new LowerLowShortShell(), instruments, s);
+//		runAlgoAggregate(new LowerLowShortShell2(), instruments, s);
+//		runAlgoAggregate(new LowerLowShortShell3(), instruments, s);
+//		runAlgoAggregate(new Pattern17ShortShell(), instruments, s);
+//		runAlgoAggregate(new Pattern22ShortShell(), instruments, s);
 //		runAlgoAggregate(new ShortATHShell(), instruments, s);
-		
-//		runAlgoAggregate(new LongRegressionAlgo2023(), instruments, s);
-//		runAlgoAggregate(new BreakoutLongAlgo(), instruments, s);
-//		runAlgoAggregate(new HLHHTrackingAlgo(), instruments, s);
-//		runAlgoAggregate(new ImprovedReferenceAlgo3(), instruments, s);
-//		runAlgoAggregate(new SuperTrendLongAlgo(), instruments, s);
-//		runAlgoAggregate(new BouncePeriodLowAlgo(), instruments, s);
+//		runAlgoAggregate(new ShortHHShell(), instruments, s);
+//		runAlgoAggregate(new SuperTrendShortShell(), instruments, s);
+
+//		runAlgoAggregate(new LongMeanBounceAlgo(), instruments, s);
+
 	}
 
 	/**
@@ -212,15 +218,24 @@ public class Main {
 //			Chart.createAndShowGUI(histories, algo, bor, true);
 	}
 
+	/**
+	 * 2 Active Orders, 19566 Closed Orders, 6 Active Positions, 7828 Closed Positions
+	 * PnL 339,947,349 inc. Costs 36,081,675 Yearly Return 38.0%
+	 * Lowest PnL -151,294 Max Drawdown -3,195,244 Avg Trade Perf 2.5%
+	 * @return
+	 */
 	public static List<Algo> getBestAlgos() {
 		// Algos
 		List<Algo> algos = new ArrayList<Algo>();
-		algos.add(new BreakoutLongAlgo());
-		algos.add(new LongRegressionAlgo2023());
-		algos.add(new BouncePeriodLowAlgo());
-		algos.add(new HLHHTrackingAlgo());
-		algos.add(new ImprovedReferenceAlgo3());
-		algos.add(new SuperTrendLongAlgo());
+		algos.add(new LongMeanBounceAlgo()); // LongMeanBounceAlgo-SMAD/2001.0-EMAD/70-4.0--TE/20--RS/702.0--NGMW/30.5--SFM/2003.00.5 976 -45,864 10,458,037 18.31%
+		algos.add(new BasicShortAlgo()); // BasicShortAlgo-!NVMD/ADP3-HH/SDP701.5--TE/10--NGMW/50.1 370.0 0 825,405 6.75%
+		algos.add(new LongPeakAlgo()); //LongPeakAlgo-GD/5false-!HH/ADP202.0--TE/20--RS/204.0 328.0 -4,106 1,873,265 10.05%
+		algos.add(new BreakoutLongAlgo()); // BreakoutLongAlgo-NPO-!HH/SDP2002.5-HH/SDP2004.0--SFM/705.02.0 305.0 -5,230 2,071,482 10.61%
+		algos.add(new BouncePeriodLowAlgo()); // BouncePeriodLowAlgo-NPO-NPL/70-!HH/SDP2002.5--DTS/ATR201.5--SFM/2003.01.0 357.0 -16,952 1,195,698 8.14%
+		algos.add(new HLHHTrackingAlgo()); // HLHHTrackingAlgo-HH/ADP2004.5-NVMD/SDP5-OBB/202.5false--TE/10--RS/204.0--RSIT/70true--SFM/706.01.0 872.0 -41,699 19,727,866 21.68%
+		algos.add(new LongRegressionAlgo2023()); // LongRegressionAlgo2023-HH/ADP204.0-OBB/201.0false--RS/203.5--NGMW/50.5--RL--RTS/2000.05 381.0 -136,038 2,026,435 10.38%
+		algos.add(new SuperTrendLongAlgo()); // SuperTrendLongAlgo-ST/10SMA-EMAD/51.0-HH/ADP704.0-EMAC/50200--TE/20--RS/703.5--RTS/700.05--TSWA/20--RL 1037.0 -155,023 8,623,337 17.27%
+		algos.add(new ImprovedReferenceAlgo3()); // ImprovedReferenceAlgo3-HH/ADP203.0-RT/700.2--DTS/ADP2004.0--EMAT/50 1537.0 -187,709 115,397,476 31.64%
 		return algos;
 	}
 
@@ -246,6 +261,7 @@ public class Main {
 		Algo.run(algo, histories, bor);
 
 		// Get stats
+		Print.printShortAlgo(algo, bor);
 		bor.cleanStats();
 		bor.printStats(new Date());
 

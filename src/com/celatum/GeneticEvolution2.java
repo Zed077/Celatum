@@ -46,7 +46,7 @@ import com.celatum.data.HistoricalData;
 import com.celatum.data.Instrument;
 import com.celatum.data.Instrument.Source;
 
-public class GeneticEvolution {
+public class GeneticEvolution2 {
 	private Vector<EntryCondition> entryConditions = new Vector<EntryCondition>();
 	private Vector<ExitStrategy> exitStrategies = new Vector<ExitStrategy>();
 	private Vector<AlgoRunner> population = new Vector<AlgoRunner>();
@@ -59,7 +59,7 @@ public class GeneticEvolution {
 	private Vector<HistoricalData> histories = new Vector<HistoricalData>();
 	private AlgoRunner noGeneAlgo;
 
-	public GeneticEvolution(List<Instrument> instruments, Source s) {
+	public GeneticEvolution2(List<Instrument> instruments, Source s) {
 		percentFormat.setMaximumFractionDigits(2);
 		numberFormat.setMaximumFractionDigits(0);
 
@@ -212,7 +212,7 @@ public class GeneticEvolution {
 
 	private void createExitStrategiesGen0() {
 		// Top 5
-		List<AlgoRunner> cpop = new Vector<GeneticEvolution.AlgoRunner>();
+		List<AlgoRunner> cpop = new Vector<GeneticEvolution2.AlgoRunner>();
 		cpop.addAll(population.subList(0, 1));
 		population.clear();
 		population.addAll(cpop);
@@ -224,7 +224,7 @@ public class GeneticEvolution {
 		printPopulation();
 
 		// Mutate
-		Vector<AlgoRunner> mutants = new Vector<GeneticEvolution.AlgoRunner>();
+		Vector<AlgoRunner> mutants = new Vector<GeneticEvolution2.AlgoRunner>();
 		for (AlgoRunner ar : population) {
 			for (ExitStrategy s : exitStrategies) {
 				AlgoRunner mutant = ar.clone();
@@ -241,7 +241,7 @@ public class GeneticEvolution {
 		System.out.println("--------------- GENETIC SELECTION");
 
 		// Remove broken algos
-		Vector<AlgoRunner> remove = new Vector<GeneticEvolution.AlgoRunner>();
+		Vector<AlgoRunner> remove = new Vector<GeneticEvolution2.AlgoRunner>();
 		for (AlgoRunner ar : population) {
 			if (ar.getnPositions() <= histories.size() * minPositions) {
 				remove.add(ar);
@@ -261,13 +261,13 @@ public class GeneticEvolution {
 //		}
 
 		// Top 5
-		Vector<AlgoRunner> survivors = new Vector<GeneticEvolution.AlgoRunner>();
+		Vector<AlgoRunner> survivors = new Vector<GeneticEvolution2.AlgoRunner>();
 		for (int i = 0; i < Math.min(nSurvivors, population.size()); i++) {
 			survivors.add(population.get(i));
 		}
 
 		// Keep the best gene variants
-		HashMap<String, AlgoRunner> bestGenes = new HashMap<String, GeneticEvolution.AlgoRunner>();
+		HashMap<String, AlgoRunner> bestGenes = new HashMap<String, GeneticEvolution2.AlgoRunner>();
 		for (AlgoRunner ar : population) {
 			bestGenes.putIfAbsent(ar.getGenoType(), ar);
 		}
@@ -277,7 +277,7 @@ public class GeneticEvolution {
 		population.addAll(bestGenes.values());
 
 		// Deduplicate
-		TreeMap<String, AlgoRunner> dedupe = new TreeMap<String, GeneticEvolution.AlgoRunner>();
+		TreeMap<String, AlgoRunner> dedupe = new TreeMap<String, GeneticEvolution2.AlgoRunner>();
 		for (AlgoRunner ar : population) {
 			dedupe.put(ar.toString(), ar);
 		}

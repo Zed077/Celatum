@@ -1,23 +1,25 @@
-package com.celatum.algos.shell;
+package com.celatum.algos;
 
 import com.celatum.BookOfRecord;
-import com.celatum.algos.Algo;
-import com.celatum.algos.entry.EMADistance;
-import com.celatum.algos.entry.NoPositionOpen;
-import com.celatum.algos.entry.SMADistance;
-import com.celatum.algos.exit.DailyTrailingStop;
-import com.celatum.algos.exit.DailyTrailingStop.Method;
+import com.celatum.algos.entry.HigherHighs;
+import com.celatum.algos.entry.NoViolentMoveDown;
+import com.celatum.algos.entry.ReverseCondition;
+import com.celatum.algos.exit.NotGoneMyWay;
 import com.celatum.algos.exit.TimedExit;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.maths.Calc;
 import com.celatum.trading.ShortOrder;
 
-public class BasicShortShell extends Algo {
+public class BasicShortAlgo extends Algo {
 	private Serie atr;
 	
-	public BasicShortShell() {
+	public BasicShortAlgo() {
 		// BasicShortShell-!NVMD/ADP3-HH/SDP701.5--TE/10--NGMW/50.1 370 0 105,447 1.59%
+		addAlgoComponent(new ReverseCondition(new NoViolentMoveDown(NoViolentMoveDown.Method.ADP, 3)));
+		addAlgoComponent(new HigherHighs(HigherHighs.Method.SDP, 70, 1.5));
+		addAlgoComponent(new TimedExit(10));
+		addAlgoComponent(new NotGoneMyWay(5, 0.1));
 	}
 
 	@Override
@@ -53,6 +55,6 @@ public class BasicShortShell extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new BasicShortShell();
+		return new BasicShortAlgo();
 	}
 }

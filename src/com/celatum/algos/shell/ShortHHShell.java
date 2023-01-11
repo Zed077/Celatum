@@ -1,26 +1,23 @@
 package com.celatum.algos.shell;
 
-import java.awt.Color;
-
 import com.celatum.BookOfRecord;
 import com.celatum.algos.Algo;
-import com.celatum.algos.entry.NoPositionOpen;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.data.SerieItem;
 import com.celatum.maths.Calc;
 import com.celatum.maths.ZigZagRelative;
-import com.celatum.trading.LongOrder;
 import com.celatum.trading.ShortOrder;
 
 public class ShortHHShell extends Algo {
 	private Serie atr;
 	private Serie adp;
-//	private Serie hplot = new Serie();
-//	private Serie lplot = new Serie();
-//	private Serie oplot = new Serie();
 	private double deviationBreath = 2;
 	private int adpPeriod = 70;
+	
+	public ShortHHShell() {
+		// ShortHHShell-HH/SDP204.0-!HH/SDP2005.5--EDS/701.03.0--DTS/ADP204.0--SFM/205.02.0 359 0 539,075 5.26%
+	}
 
 	@Override
 	protected void setUp(HistoricalData hd, BookOfRecord bor) {
@@ -31,18 +28,6 @@ public class ShortHHShell extends Algo {
 		// ADP
 		adp = Calc.atrPercent(hd, adpPeriod);
 		hd.syncReferenceIndex(adp);
-
-		addAlgoComponent(new NoPositionOpen());
-
-		// Plot
-//		double minPercent = adp.get(0) * deviationBreath;
-//		ZigZagRelative zz = new ZigZagRelative(hd, minPercent);
-//		this.plot(zz.getHighs(), "Highs");
-//		this.plot(zz.getLows(), "Lows");
-
-//		this.plot(hplot, "HH", Color.RED);
-//		this.plot(lplot, "LL", Color.GREEN);
-//		this.plot(oplot, "OO", Color.BLUE);
 	}
 
 	@Override

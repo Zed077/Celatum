@@ -14,6 +14,11 @@ public class RegressionTrend extends EntryCondition {
 	public RegressionTrend() {
 	}
 
+	/**
+	 * 
+	 * @param period
+	 * @param rate in yearly percent
+	 */
 	public RegressionTrend(int period, double rate) {
 		this.period = period;
 		this.rate = rate;

@@ -51,6 +51,13 @@ public class LinearRegression {
 		return ryear;
 	}
 	
+	public double getAbsoluteDailyRateOfChange() {
+		// Rate of change per millisec
+		double rmillisec = regression.getSlope();
+		double rday =  rmillisec * 1000*60*60*24;
+		return rday;
+	}
+	
 	/**
 	 * @return rate of change per year as a percentage
 	 */

@@ -16,7 +16,7 @@ public class RaynerTeosAlgo extends Algo {
 	
 	public RaynerTeosAlgo() {
 		addAlgoComponent(new NoPositionOpen());
-		addAlgoComponent(new SMADistance(200, 0.00001));
+		addAlgoComponent(new SMADistance(200, 10, true));
 //		addAlgoComponent(new TimedExit(10));
 		addAlgoComponent(new RSIThreshold(50, true));
 	}

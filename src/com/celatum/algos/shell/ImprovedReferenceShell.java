@@ -7,7 +7,6 @@ import com.celatum.algos.entry.HigherHighs.Method;
 import com.celatum.algos.entry.RegressionTrend;
 import com.celatum.algos.exit.DailyTrailingStop;
 import com.celatum.algos.exit.EMATippingStop;
-import com.celatum.algos.exit.TimedExit;
 import com.celatum.data.HistoricalData;
 import com.celatum.data.Serie;
 import com.celatum.maths.Calc;

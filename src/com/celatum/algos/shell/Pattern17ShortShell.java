@@ -13,11 +13,11 @@ import com.celatum.data.Serie;
 import com.celatum.maths.Calc;
 import com.celatum.trading.ShortOrder;
 
-public class BasicShortShell extends Algo {
+public class Pattern17ShortShell extends Algo {
 	private Serie atr;
-	
-	public BasicShortShell() {
-		// BasicShortShell-!NVMD/ADP3-HH/SDP701.5--TE/10--NGMW/50.1 370 0 105,447 1.59%
+
+	public Pattern17ShortShell() {
+		// Pattern17ShortShell-!EMAD/20-2.0-OBB/201.0false-RSIF/60.0false--RTS/500.2--NFTL/3--EDS/702.02.5--NGMW/50.5 304 -431 59,189 0.96%
 	}
 
 	@Override
@@ -38,12 +38,15 @@ public class BasicShortShell extends Algo {
 	 */
 	@Override
 	protected void processToday(HistoricalData hd, BookOfRecord bor) {
-		// Place order
-		double entry = hd.midClose.get(0);
-		ShortOrder order = new ShortOrder(hd.instrument, getGroup(), hd.getReferenceDate(), entry);
-		order.setStop(entry + atr.get(0) * 3);
-		order.setLimit(entry - atr.get(0) * 3);
-		bor.addOrder(order);
+		if (hd.midLow.get(3) > hd.midHigh.get(0) && hd.midHigh.get(0) > hd.midLow.get(1)
+				&& hd.midLow.get(0) > hd.midLow.get(2) && hd.midLow.get(1) > hd.midLow.get(2)) {
+			// Place order
+			double entry = hd.midLow.get(0);
+			ShortOrder order = new ShortOrder(hd.instrument, getGroup(), hd.getReferenceDate(), entry);
+			order.setStop(entry + atr.get(0) * 3);
+			order.setLimit(entry - atr.get(0) * 3);
+			bor.addOrder(order);
+		}
 	}
 
 	@Override
@@ -53,6 +56,6 @@ public class BasicShortShell extends Algo {
 
 	@Override
 	public Algo getInstance() {
-		return new BasicShortShell();
+		return new Pattern17ShortShell();
 	}
 }
